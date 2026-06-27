@@ -1,4 +1,3 @@
-import { Footer } from "@/components/landing/footer";
 import { CTA } from "@/components/landing/cta";
 import { Features } from "@/components/landing/features";
 import { Hero } from "@/components/landing/hero";
@@ -8,7 +7,7 @@ import { TrustStrip } from "@/components/landing/trust-strip";
 
 export default function Page() {
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background">
       <main>
         <Hero />
         <TrustStrip />
@@ -17,8 +16,6 @@ export default function Page() {
         <InsightsShowcase />
         <CTA />
       </main>
-
-      <Footer />
     </div>
   );
 }
