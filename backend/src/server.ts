@@ -1,17 +1,34 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response } from "express";
+import { prisma } from "./lib/prisma";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware to parse JSON request bodies
 app.use(express.json());
 
-// A basic health check route
-app.get('/', (req: Request, res: Response) => {
-  res.send('Backend server is running smoothly!');
+app.get("/", async (req: Request, res: Response) => {
+try {
+const userCount = await prisma.user.count();
+
+
+res.json({
+  message: "Backend server is running smoothly!",
+  database: "Connected to Neon 🚀",
+  users: userCount,
 });
 
-// Start the server
+
+} catch (error) {
+console.error(error);
+
+
+res.status(500).json({
+  message: "Database connection failed.",
+});
+
+}
+});
+
 app.listen(PORT, () => {
-  console.log(`🚀 Server is blasting off on http://localhost:${PORT}`);
+console.log(`🚀 Server is blasting off on http://localhost:${PORT}`);
 });
