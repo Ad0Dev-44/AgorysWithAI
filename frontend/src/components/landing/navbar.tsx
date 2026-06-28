@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function Navbar() {
   return (
@@ -8,11 +9,13 @@ export function Navbar() {
           TechTalks Agorys
         </Link>
 
-        <div className="flex gap-6">
+        <div className="flex items-center gap-6">
           <Link href="/">Home</Link>
           <Link href="/dashboard">Dashboard</Link>
           <Link href="/login">Login</Link>
           <Link href="/register">Register</Link>
+
+          <ThemeToggle />
         </div>
       </div>
     </nav>
