@@ -1,8 +1,23 @@
 # 📊 AGORYS — Smart Decision Support System for Businesses
 
-AGORYS is a full-stack intelligent decision support system designed to help businesses analyze data, generate KPIs, forecasts, and actionable recommendations using structured datasets.
+AGORYS is a full-stack intelligent decision support platform designed to help businesses transform raw data into actionable insights.
 
-It combines a modern web frontend, a scalable backend API, and a PostgreSQL database (Neon) powered by Prisma ORM.
+It enables users to manage datasets, compute KPIs, generate forecasts, and receive automated recommendations through a scalable modern architecture.
+
+---
+
+# 🎯 Goal
+
+The goal of AGORYS is to provide a unified data intelligence system where users can:
+
+- Store and manage structured datasets
+- Compute real-time KPIs
+- Generate predictive forecasts
+- Receive automated recommendations
+- Build analytical reports from business data
+- Support future AI-driven analytics and decision systems
+
+The system is designed with modular scalability and clean separation of concerns (frontend, backend, and analytics layer).
 
 ---
 
@@ -25,20 +40,20 @@ It combines a modern web frontend, a scalable backend API, and a PostgreSQL data
 ## Database
 - PostgreSQL (Neon Cloud)
 
-## Planned Services
-- analytics-service (future microservice for AI/ML + forecasting)
+## Future Extensions
+- analytics-service (AI/ML forecasting microservice)
 
 ---
 
-# 🧠 Core Features (Planned)
+# 🧠 Core Features
 
 - User authentication (JWT + refresh tokens)
-- Dataset upload & storage
+- Dataset upload & management
 - KPI computation engine
-- Forecasting system (time-series analysis)
+- Time-series forecasting system
 - Recommendation engine
 - Interactive dashboards
-- Report generation (summary / KPI / forecast / insights)
+- Report generation (KPIs, forecasts, insights)
 
 ---
 
@@ -100,32 +115,10 @@ techtalks-agorys/
 ├── package-lock.json            # ⚠️ root lockfile (avoid if possible)
 └── README.md
 ```
-# 🗄️ Project Overview
 
-This project is a full-stack system built around a structured relational database (Prisma) with a Next.js frontend and a Node.js backend. It focuses on datasets, analytics, forecasting, and reporting.
+# 🗄️ Database Design (Prisma)
 
----
-
-## 🎯 Goal
-
-The goal of this system is to provide a scalable data platform where users can:
-
-- Store and manage datasets
-- Generate KPIs from structured data
-- Produce forecasts and predictive insights
-- Receive automated recommendations
-- Generate analytical reports
-- Maintain secure authentication via refresh tokens
-
-The architecture is designed to support modular growth, clean data relationships, and future AI-driven analytics.
-
----
-
-## 🗄️ Database Design (Prisma)
-
-The system is built around a relational structure:
-
-### Main Entities
+## Main Entities
 
 - User
 - Dataset
@@ -136,21 +129,21 @@ The system is built around a relational structure:
 - Report
 - RefreshToken
 
-### Key Relationships
+## Relationships
 
 - A **User** owns multiple **Datasets**
 - A **Dataset** contains multiple **DataRecords**
-- Each **Dataset** generates:
+- Each Dataset generates:
   - KPIs
   - Forecasts
   - Recommendations
-- Users can generate **Reports** based on datasets
+- Users can generate **Reports** from datasets
 
 ---
 
-## ⚙️ Backend Setup
+# ⚙️ Backend Setup
 
-### Install dependencies
+## Install dependencies
 ```bash
 cd backend
 npm install
@@ -170,11 +163,52 @@ npx prisma studio
 ```bash
 cd frontend
 npm install
+```
+### Run development server
+```bash
 npm run dev
 ```
-The app runs at:
+Frontend runs at:
 ```bash
 http://localhost:3000
 ```
 ## 🗃️ Database Setup (Neon + Prisma)
 
+- Create a Neon project  
+- Copy `DATABASE_URL` into `.env`
+
+### Run migrations
+
+```bash
+npx prisma migrate dev
+npx prisma generate
+```
+
+## 📊 Prisma Studio (Database Viewer)
+
+To visually inspect the database:
+```bash
+npx prisma studio
+```
+Then open:
+```bash
+http://localhost:5555
+```
+
+## 📄 Custom Proprietary License
+```bash
+Copyright (c) 2026 AGORYS
+
+This software is proprietary and confidential.
+
+You are NOT allowed to:
+- Copy, modify, or redistribute this software
+- Sell or sublicense the software
+- Use it to build a competing product
+- Reverse engineer or extract core logic
+
+You may only:
+- View the source code for evaluation purposes (if granted access)
+
+Any unauthorized use, reproduction, or distribution is strictly prohibited.
+```
