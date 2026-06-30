@@ -112,7 +112,6 @@ techtalks-agorys/
 │   └── constants/
 │
 │
-├── package-lock.json            # ⚠️ root lockfile (avoid if possible)
 └── README.md
 ```
 
