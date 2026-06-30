@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Logo } from "@/components/landing/logo";
+import  Logo  from "@/components/landing/logo";
 
 const navLinks = [
   { label: "Features", href: "#features" },
