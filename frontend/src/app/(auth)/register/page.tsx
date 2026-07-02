@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useLogout } from "@/hooks/use-logout";
 
 import {
   registerSchema,
@@ -26,6 +27,7 @@ import {
   FieldLabel,
   FieldError,
 } from "@/components/ui/field";
+import { LogoutButton } from "@/components/logout-button";
 
 type Step = "register" | "verify";
 
@@ -136,6 +138,7 @@ export default function RegisterPage() {
           <CardTitle>
             {step === "register" ? "Create an account" : "Verify your email"}
           </CardTitle>
+          <LogoutButton />
         </CardHeader>
 
         <CardContent>
