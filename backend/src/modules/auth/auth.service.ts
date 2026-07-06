@@ -1,12 +1,18 @@
 import { prisma } from "../../lib/prisma.ts";
 import { hashPassword, comparePassword } from "../../utils/pwdHelper.ts";
-
-import { generateAccessToken } from "../../utils/jwtHelper.js";
-import { randomUUID } from "crypto";
-
+import { generateAccessToken } from "../../utils/jwtHelper.ts";
 import { ApiError } from "../../utils/ApiError.ts";
+import { randomUUID, createHash } from "crypto";
 
 const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Hash refresh tokens before storing in DB
+ * (prevents token theft if DB leaks)
+ */
+function hashToken(token: string) {
+  return createHash("sha256").update(token).digest("hex");
+}
 
 export class AuthService {
   // ---------------- REGISTER ----------------
@@ -19,7 +25,7 @@ export class AuthService {
       throw new ApiError(
         "EMAIL_ALREADY_EXISTS",
         "Email already in use",
-        409,
+        409
       );
     }
 
@@ -47,7 +53,7 @@ export class AuthService {
       throw new ApiError(
         "INVALID_CREDENTIALS",
         "Invalid email or password",
-        400,
+        401
       );
     }
 
@@ -57,53 +63,55 @@ export class AuthService {
       throw new ApiError(
         "INVALID_CREDENTIALS",
         "Invalid email or password",
-        400,
+        401
       );
     }
 
-    return this.createSession(user.id);
+    return this.createSession(user.id, user.email);
   }
 
-  // ---------------- REFRESH ----------------
+  // ---------------- REFRESH (ROTATION ENABLED) ----------------
   async refresh(refreshToken: string) {
+    const hashed = hashToken(refreshToken);
+
     const session = await prisma.refreshToken.findUnique({
-      where: { token: refreshToken },
+      where: { token: hashed },
     });
 
     if (!session) {
-      throw new ApiError(
-        "INVALID_TOKEN",
-        "Invalid refresh token",
-        401,
-      );
+      throw new ApiError("INVALID_TOKEN", "Invalid refresh token", 401);
     }
 
     if (session.revoked) {
-      throw new ApiError(
-        "TOKEN_REVOKED",
-        "Token has been revoked",
-        401,
-      );
+      throw new ApiError("TOKEN_REVOKED", "Token has been revoked", 401);
     }
 
     if (session.expiresAt < new Date()) {
-      throw new ApiError(
-        "TOKEN_EXPIRED",
-        "Token has expired",
-        401,
-      );
+      throw new ApiError("TOKEN_EXPIRED", "Token has expired", 401);
     }
+
+    // 🔄 ROTATE REFRESH TOKEN
+    const newRefreshToken = randomUUID();
+
+    await prisma.refreshToken.update({
+      where: { id: session.id },
+      data: {
+        token: hashToken(newRefreshToken),
+      },
+    });
 
     return {
       accessToken: generateAccessToken(session.userId),
-      refreshToken,
+      refreshToken: newRefreshToken,
     };
   }
 
   // ---------------- LOGOUT ----------------
   async logout(refreshToken: string) {
+    const hashed = hashToken(refreshToken);
+
     const session = await prisma.refreshToken.findUnique({
-      where: { token: refreshToken },
+      where: { token: hashed },
     });
 
     if (!session) return;
@@ -116,18 +124,18 @@ export class AuthService {
     });
   }
 
-  // ---------------- FORGOT PASSWORD (PLACEHOLDER) ----------------
+  // ---------------- FORGOT PASSWORD (placeholder) ----------------
   async forgotPassword(email: string) {
     return {
       message: "If the email exists, reset instructions will be sent.",
     };
   }
 
-  // ---------------- RESET PASSWORD (PLACEHOLDER) ----------------
+  // ---------------- RESET PASSWORD (placeholder) ----------------
   async resetPassword(
     email: string,
     token: string,
-    newPassword: string,
+    newPassword: string
   ) {
     return {
       message: "Password reset successful",
@@ -135,23 +143,25 @@ export class AuthService {
   }
 
   // ---------------- CREATE SESSION ----------------
-  private async createSession(userId: string) {
-  const accessToken = generateAccessToken(userId);
-  const refreshToken = randomUUID();
+  private async createSession(userId: string, email?: string) {
+    const accessToken = generateAccessToken(userId);
 
-  await prisma.refreshToken.create({
-    data: {
-      token: refreshToken,
-      userId,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    },
-  });
+    const refreshToken = randomUUID();
 
-  return {
-    accessToken,
-    refreshToken,
-  };
-}
+    await prisma.refreshToken.create({
+      data: {
+        token: hashToken(refreshToken),
+        userId,
+        expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
+      },
+    });
+
+    return {
+      user: email ? { id: userId, email } : { id: userId },
+      accessToken,
+      refreshToken,
+    };
+  }
 }
 
 export const authService = new AuthService();
