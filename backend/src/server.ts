@@ -1,24 +1,31 @@
-import "dotenv/config";
-import app from "./app.js";
-import { prisma } from "./lib/prisma.ts";
+import express, { Request, Response } from "express";
+import datasetRoutes from "./routes/dataset.routes";
+import { prisma } from "./lib/prisma";
 
+const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ---------------- START SERVER ----------------
-app.listen(PORT, () => {
-  console.log(`🚀 Server is running on http://localhost:${PORT}`);
-});
+app.use(express.json());
 
-// ---------------- OPTIONAL: DB CONNECTION TEST ----------------
-async function testDB() {
+app.get("/", async (req: Request, res: Response) => {
   try {
     const userCount = await prisma.user.count();
 
-    console.log("🟢 Database connected to Neon");
-    console.log(`👤 Users in DB: ${userCount}`);
+    res.json({
+      message: "Backend server is running smoothly!",
+      database: "Connected to Neon 🚀",
+      users: userCount,
+    });
   } catch (error) {
-    console.error("🔴 Database connection failed:", error);
-  }
-}
+    console.error(error);
 
-testDB();
+    res.status(500).json({
+      message: "Database connection failed.",
+    });
+  }
+});
+app.use("/api/datasets", datasetRoutes);
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server is blasting off on http://localhost:${PORT}`);
+});
