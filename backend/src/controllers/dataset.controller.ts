@@ -5,6 +5,7 @@ import {
   getDataset,
   listDatasets,
   previewDataset,
+  uploadDataset,
 } from "../services/dataset.service";
 
 
@@ -160,6 +161,37 @@ export async function deleteDatasetHandler(
     const result = await deleteDataset(datasetId, companyId);
 
     res.json(result);
+  } catch (error) {
+    handleDatasetError(error, res);
+  }
+}
+
+export async function uploadDatasetHandler(
+  req: Request,
+  res: Response
+) {
+  const companyId = getCompanyId(req, res);
+
+  if (!companyId) {
+    return;
+  }
+
+  if (!req.file) {
+    res.status(422).json({
+      message: "CSV file is required",
+    });
+
+    return;
+  }
+
+  try {
+    const dataset = await uploadDataset(
+      req.file,
+      companyId
+    );
+
+    res.status(201).json(dataset);
+
   } catch (error) {
     handleDatasetError(error, res);
   }

@@ -1,8 +1,10 @@
 import express, { Request, Response } from "express";
 import datasetRoutes from "./routes/dataset.routes";
 import { prisma } from "./lib/prisma";
+import { requireAuth } from "./middlewares/auth.middleware";
 
 const app = express();
+
 const PORT = process.env.PORT || 5000;
 
 app.use(express.json());
@@ -24,8 +26,17 @@ app.get("/", async (req: Request, res: Response) => {
     });
   }
 });
-app.use("/api/datasets", datasetRoutes);
+
+
+app.use(
+  "/api/datasets",
+  requireAuth,
+  datasetRoutes
+);
+
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server is blasting off on http://localhost:${PORT}`);
+  console.log(
+    `🚀 Server is blasting off on http://localhost:${PORT}`
+  );
 });
