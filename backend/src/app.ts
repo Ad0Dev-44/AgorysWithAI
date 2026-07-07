@@ -1,5 +1,8 @@
 import express from "express";
-import authRoutes from "./modules/auth/auth.routes.js";
+
+import authRoutes from "./modules/routes/auth.routes.ts";
+import userRoutes from "./modules/routes/user.routes.ts";
+
 import { errorMiddleware } from "./middlewares/error.middleware.js";
 
 const app = express();
@@ -9,8 +12,9 @@ app.use(express.json());
 
 // ---------------- ROUTES ----------------
 app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
 
-// ---------------- HEALTH CHECK ROUTE ----------------
+// ---------------- HEALTH CHECK ----------------
 app.get("/", (req, res) => {
   res.json({
     message: "Backend server is running smoothly 🚀",
