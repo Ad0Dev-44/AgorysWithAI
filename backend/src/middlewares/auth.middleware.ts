@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { verifyAccessToken } from "../utils/jwtHelper.ts";
-import { ApiError } from "../utils/ApiError.ts";
+import { verifyAccessToken } from "../utils/jwtHelper";
+import { ApiError } from "../utils/ApiError";
 
 export interface AuthenticatedRequest extends Request {
   user?: {

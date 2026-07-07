@@ -1,7 +1,7 @@
-import { prisma } from "../../lib/prisma.ts";
-import { hashPassword, comparePassword } from "../../utils/pwdHelper.ts";
-import { generateAccessToken } from "../../utils/jwtHelper.ts";
-import { ApiError } from "../../utils/ApiError.ts";
+import { prisma } from "../../lib/prisma";
+import { hashPassword, comparePassword } from "../../utils/pwdHelper";
+import { generateAccessToken } from "../../utils/jwtHelper";
+import { ApiError } from "../../utils/ApiError";
 import { randomUUID, createHash } from "crypto";
 
 const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;

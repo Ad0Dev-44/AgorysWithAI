@@ -7,27 +7,29 @@ import {
   previewDataset,
 } from "../services/dataset.service";
 
-type AuthenticatedRequest = Request & {
-  user?: {
-    id: string;
-    companyId?: string | null;
-  };
-};
 
-function getCompanyId(req: AuthenticatedRequest, res: Response) {
+function getCompanyId(
+  req: Request,
+  res: Response
+): string | null {
   const companyId = req.user?.companyId;
 
   if (!companyId) {
     res.status(401).json({
       message: "Unauthorized",
     });
+
     return null;
   }
 
   return companyId;
 }
 
-function getDatasetId(req: AuthenticatedRequest, res: Response) {
+
+function getDatasetId(
+  req: Request,
+  res: Response
+): string | null {
   const rawDatasetId = req.params.datasetId;
 
   const datasetId = Array.isArray(rawDatasetId)
@@ -38,29 +40,37 @@ function getDatasetId(req: AuthenticatedRequest, res: Response) {
     res.status(400).json({
       message: "Dataset id is required",
     });
+
     return null;
   }
 
   return datasetId;
 }
 
-function handleDatasetError(error: unknown, res: Response) {
+
+function handleDatasetError(
+  error: unknown,
+  res: Response
+): void {
   if (error instanceof Error && error.message === "DATASET_NOT_FOUND") {
-    return res.status(404).json({
+    res.status(404).json({
       message: "Dataset not found",
     });
+
+    return;
   }
 
   console.error(error);
 
-  return res.status(500).json({
+  res.status(500).json({
     message: "Internal server error",
   });
 }
 
+
 export async function listDatasetsHandler(
-  req: AuthenticatedRequest,
-  res: Response,
+  req: Request,
+  res: Response
 ) {
   const companyId = getCompanyId(req, res);
 
@@ -71,15 +81,16 @@ export async function listDatasetsHandler(
   try {
     const datasets = await listDatasets(companyId);
 
-    return res.json(datasets);
+    res.json(datasets);
   } catch (error) {
-    return handleDatasetError(error, res);
+    handleDatasetError(error, res);
   }
 }
 
+
 export async function getDatasetHandler(
-  req: AuthenticatedRequest,
-  res: Response,
+  req: Request,
+  res: Response
 ) {
   const companyId = getCompanyId(req, res);
 
@@ -96,15 +107,16 @@ export async function getDatasetHandler(
   try {
     const dataset = await getDataset(datasetId, companyId);
 
-    return res.json(dataset);
+    res.json(dataset);
   } catch (error) {
-    return handleDatasetError(error, res);
+    handleDatasetError(error, res);
   }
 }
 
+
 export async function previewDatasetHandler(
-  req: AuthenticatedRequest,
-  res: Response,
+  req: Request,
+  res: Response
 ) {
   const companyId = getCompanyId(req, res);
 
@@ -121,15 +133,16 @@ export async function previewDatasetHandler(
   try {
     const preview = await previewDataset(datasetId, companyId);
 
-    return res.json(preview);
+    res.json(preview);
   } catch (error) {
-    return handleDatasetError(error, res);
+    handleDatasetError(error, res);
   }
 }
 
+
 export async function deleteDatasetHandler(
-  req: AuthenticatedRequest,
-  res: Response,
+  req: Request,
+  res: Response
 ) {
   const companyId = getCompanyId(req, res);
 
@@ -146,8 +159,8 @@ export async function deleteDatasetHandler(
   try {
     const result = await deleteDataset(datasetId, companyId);
 
-    return res.json(result);
+    res.json(result);
   } catch (error) {
-    return handleDatasetError(error, res);
+    handleDatasetError(error, res);
   }
 }

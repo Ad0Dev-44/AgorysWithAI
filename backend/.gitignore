@@ -1,5 +1,16 @@
-node_modules
-# Keep environment variables out of version control
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment variables
 .env
 
-/src/generated/prisma
+# Prisma generated client (if you generate it here)
+src/generated/prisma/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

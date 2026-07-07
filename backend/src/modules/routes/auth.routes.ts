@@ -1,14 +1,14 @@
 import { Router } from "express";
 
-import { authController } from "../auth/auth.controller.ts";
+import { authController } from "../auth/auth.controller";
 
-import { validate } from "../../middlewares/validate.middleware.ts";
+import { validate } from "../../middlewares/validate.middleware";
 
-import { registerSchema } from "../../validationSchemas/register.ts";
-import { loginSchema } from "../../validationSchemas/login.ts";
-import { refreshSchema } from "../../validationSchemas/refresh.ts";
-import { forgotPasswordSchema } from "../../validationSchemas/forgotPassword.ts";
-import { resetPasswordSchema } from "../../validationSchemas/resetPassword.ts";
+import { registerSchema } from "../../validationSchemas/register";
+import { loginSchema } from "../../validationSchemas/login";
+import { refreshSchema } from "../../validationSchemas/refresh";
+import { forgotPasswordSchema } from "../../validationSchemas/forgotPassword";
+import { resetPasswordSchema } from "../../validationSchemas/resetPassword";
 
 const router = Router();
 

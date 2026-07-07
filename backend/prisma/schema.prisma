@@ -13,57 +13,143 @@ enum UserRole {
   ANALYST
 }
 
+model Company {
+  id   String @id @default(uuid())
+  name String
+
+  users User[]
+
+  datasets Dataset[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model User {
-  id            String   @id @default(uuid())
-  name          String?
-  email         String   @unique
-  passwordHash  String
-  role          UserRole @default(ANALYST)
+  id           String   @id @default(uuid())
+  name         String?
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(ANALYST)
 
-  isVerified    Boolean  @default(false)
+  isVerified Boolean @default(false)
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
 
-  refreshTokens RefreshToken[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  refreshTokens     RefreshToken[]
   emailVerification EmailVerification?
-  passwordReset PasswordReset?
+  passwordReset     PasswordReset?
 }
 
 model RefreshToken {
-  id         String   @id @default(uuid())
-  token      String   @unique
+  id    String @id @default(uuid())
+  token String @unique
 
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  expiresAt  DateTime
-  revoked    Boolean  @default(false)
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([userId])
 }
 
 model EmailVerification {
-  id            String   @id @default(uuid())
-  userId        String   @unique
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id String @id @default(uuid())
 
-  otpHash       String
-  expiresAt     DateTime
-  attempts      Int      @default(0)
-  lockedUntil   DateTime?
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  lastSentAt    DateTime?
+  otpHash     String
+  expiresAt   DateTime
+  attempts    Int       @default(0)
+  lockedUntil DateTime?
+
+  lastSentAt DateTime?
 }
 
 model PasswordReset {
-  id            String   @id @default(uuid())
-  userId        String   @unique
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id String @id @default(uuid())
 
-  tokenHash     String
-  expiresAt     DateTime
-  lastSentAt    DateTime?
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tokenHash  String
+  expiresAt  DateTime
+  lastSentAt DateTime?
+}
+
+model Dataset {
+  id String @id @default(uuid())
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  filename String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  dataRecords DataRecord[]
+
+  kpis            KPI[]
+  forecasts       Forecast[]
+  recommendations Recommendation[]
+
+  @@index([companyId])
+}
+
+model DataRecord {
+  id String @id @default(uuid())
+
+  datasetId String
+  dataset   Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  date    DateTime
+  revenue Decimal
+
+  createdAt DateTime @default(now())
+
+  @@index([datasetId])
+}
+
+model KPI {
+  id String @id @default(uuid())
+
+  datasetId String
+  dataset   Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  name  String
+  value Decimal
+
+  createdAt DateTime @default(now())
+}
+
+model Forecast {
+  id String @id @default(uuid())
+
+  datasetId String
+  dataset   Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  date  DateTime
+  value Decimal
+
+  createdAt DateTime @default(now())
+}
+
+model Recommendation {
+  id String @id @default(uuid())
+
+  datasetId String
+  dataset   Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  text String
+
+  createdAt DateTime @default(now())
 }

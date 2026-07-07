@@ -1,7 +1,7 @@
 import express from "express";
 
-import authRoutes from "./modules/routes/auth.routes.ts";
-import userRoutes from "./modules/routes/user.routes.ts";
+import authRoutes from "./modules/routes/auth.routes";
+import userRoutes from "./modules/routes/user.routes";
 
 import { errorMiddleware } from "./middlewares/error.middleware.js";
 

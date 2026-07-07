@@ -1,6 +1,6 @@
 import express from "express";
-import { requireAuth } from "../../middlewares/auth.middleware.ts";
-import { AuthenticatedRequest } from "../../middlewares/auth.middleware.ts";
+import { requireAuth } from "../../middlewares/auth.middleware";
+import { AuthenticatedRequest } from "../../middlewares/auth.middleware";
 
 const router = express.Router();
 
