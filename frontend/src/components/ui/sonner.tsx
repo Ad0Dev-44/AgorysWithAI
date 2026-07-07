@@ -2,6 +2,8 @@
 
 import { Toaster as Sonner } from "sonner";
 
-export function Toaster() {
-  return <Sonner />;
+type ToasterProps = React.ComponentProps<typeof Sonner>;
+
+export function Toaster(props: ToasterProps) {
+  return <Sonner {...props} />;
 }
