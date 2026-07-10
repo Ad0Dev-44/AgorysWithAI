@@ -1,10 +1,9 @@
-import { ReactNode } from "react";
 import { RequireAuth } from "@/components/require-auth";
 
-export default function ReportsLayout({
+export default function UploadLayout({
   children,
 }: {
-  children: ReactNode;
+  children: React.ReactNode;
 }) {
   return <RequireAuth>{children}</RequireAuth>;
 }

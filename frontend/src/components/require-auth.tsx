@@ -11,7 +11,8 @@ interface RequireAuthProps {
 export function RequireAuth({ children }: RequireAuthProps) {
   const router = useRouter();
 
-  const { accessToken, hasHydrated } = useAuthStore();
+  const hasHydrated = useAuthStore((state) => state.hasHydrated);
+  const accessToken = useAuthStore((state) => state.accessToken);
 
   useEffect(() => {
     if (hasHydrated && !accessToken) {
@@ -19,13 +20,14 @@ export function RequireAuth({ children }: RequireAuthProps) {
     }
   }, [hasHydrated, accessToken, router]);
 
-  // Wait until Zustand has restored persisted state
   if (!hasHydrated) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+        Loading...
+      </div>
+    );
   }
 
-  // Hydrated but not authenticated.
-  // The redirect has been triggered above.
   if (!accessToken) {
     return null;
   }

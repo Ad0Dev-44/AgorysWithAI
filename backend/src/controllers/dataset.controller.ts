@@ -6,6 +6,7 @@ import {
   listDatasets,
   previewDataset,
   uploadDataset,
+  saveMapping,
 } from "../services/dataset.service";
 
 
@@ -185,14 +186,56 @@ export async function uploadDatasetHandler(
   }
 
   try {
-    const dataset = await uploadDataset(
-      req.file,
-      companyId
-    );
+      const dataset = await uploadDataset(
+    {
+      buffer:req.file.buffer,
+      originalname:req.file.originalname,
+    },
+    companyId
+  );
 
     res.status(201).json(dataset);
 
   } catch (error) {
     handleDatasetError(error, res);
   }
+}
+
+export async function saveMappingHandler(
+  req: Request,
+  res: Response
+) {
+
+  const companyId = getCompanyId(req, res);
+
+  if (!companyId) {
+    return;
+  }
+
+
+  const datasetId = getDatasetId(req, res);
+
+  if (!datasetId) {
+    return;
+  }
+
+
+  try {
+
+    const result = await saveMapping(
+      datasetId,
+      companyId,
+      req.body
+    );
+
+
+    res.json(result);
+
+
+  } catch(error) {
+
+    handleDatasetError(error, res);
+
+  }
+
 }

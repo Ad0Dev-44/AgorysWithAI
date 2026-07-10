@@ -1,141 +1,161 @@
-import { unlink, mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
-import crypto from "node:crypto";
-
-import { parse } from "csv-parse/sync";
-
 import { prisma } from "../lib/prisma";
 
-const CSV_UPLOAD_DIR = path.resolve(
-  process.cwd(),
-  "uploads",
-  "datasets",
-);
+import {
+  validateCsvBuffer,
+  extractHeaders,
+  validateMapping,
+  parseRows,
+} from "./csvParser.service";
 
+import {
+  saveDatasetFile,
+  deleteDatasetFile,
+  readDatasetFile,
+} from "./fileStorage.service";
 
-// =============================
-// CSV Helpers
-// =============================
-
-function validateCsvBuffer(buffer: Buffer) {
-  if (!buffer || buffer.length === 0) {
-    throw new Error("EMPTY_FILE");
-  }
-
-  const content = buffer.toString("utf8").trim();
-
-  if (!content) {
-    throw new Error("EMPTY_FILE");
-  }
-}
-
-
-function extractHeaders(buffer: Buffer): string[] {
-  const records = parse(
-    buffer.toString("utf8"),
-    {
-      columns: true,
-      skip_empty_lines: true,
-    }
-  ) as Record<string, string>[];
-
-
-  if (!records.length) {
-    throw new Error("EMPTY_FILE");
-  }
-
-
-  return Object.keys(records[0]);
-}
-
-
-async function saveCsvFile(
-  buffer: Buffer,
-  filename: string,
-) {
-  await mkdir(CSV_UPLOAD_DIR, {
-    recursive: true,
-  });
-
-
-  const filePath = path.join(
-    CSV_UPLOAD_DIR,
-    filename,
-  );
-
-
-  await writeFile(
-    filePath,
-    buffer,
-  );
-
-
-  return filePath;
-}
-
+import type {
+  ColumnMapping,
+} from "./csvParser.service";
 
 // =============================
 // Upload Dataset
 // =============================
 
 export async function uploadDataset(
-  file: Express.Multer.File,
-  companyId: string,
-) {
-  validateCsvBuffer(file.buffer);
+ file:{
+   buffer:Buffer;
+   originalname:string;
+ },
+ companyId:string,
+){
+
+ validateCsvBuffer(file.buffer);
+
+ const columns = extractHeaders(file.buffer);
 
 
-  const columns = extractHeaders(
-    file.buffer,
-  );
+ const dataset = await prisma.dataset.create({
+   data:{
+     companyId,
+     filename:file.originalname,
+   },
+ });
 
 
-  const storedFilename =
-    `${crypto.randomUUID()}-${file.originalname}`;
+ await saveDatasetFile(
+   dataset.id,
+   file.buffer
+ );
 
 
-  await saveCsvFile(
-    file.buffer,
-    storedFilename,
-  );
+ return {
+   datasetId:dataset.id,
+   filename:dataset.filename,
+   columns,
+ };
+
+}
 
 
-  const dataset = await prisma.dataset.create({
-    data: {
-      companyId,
+export async function saveMapping(
+ datasetId:string,
+ companyId:string,
+ mapping:ColumnMapping,
+){
 
-      // Prisma Dataset only has filename
-      filename: storedFilename,
-    },
-  });
+ await getOwnedDataset(
+   datasetId,
+   companyId
+ );
 
 
-  return {
-    datasetId: dataset.id,
-    filename: file.originalname,
-    columns,
-  };
+ const buffer =
+ await readDatasetFile(datasetId);
+
+
+
+ const headers =
+ extractHeaders(buffer);
+
+
+
+ validateMapping(
+   headers,
+   mapping
+ );
+
+
+
+ const {
+   records,
+   errors
+ } =
+ parseRows(
+   buffer,
+   mapping
+ );
+
+
+
+ if(records.length>0){
+
+   await prisma.dataRecord.createMany({
+
+    data:records.map(record=>({
+
+      datasetId,
+
+      date:record.date,
+
+      product:record.product,
+
+      revenue:record.revenue,
+
+    })),
+
+   });
+
+ }
+
+
+
+ return {
+
+   recordsCreated:
+      records.length,
+
+   rowErrors:
+      errors,
+
+ };
+
 }
 
 
 // =============================
-// Existing Dataset Functions
+// Get Owned Dataset
 // =============================
 
 export async function getOwnedDataset(
-  datasetId: string,
-  companyId: string,
-) {
-  const dataset = await prisma.dataset.findFirst({
-    where: {
-      id: datasetId,
-      companyId,
-    },
-  });
+  datasetId:string,
+  companyId:string,
+){
+
+  const dataset =
+    await prisma.dataset.findFirst({
+
+      where:{
+        id:datasetId,
+        companyId,
+      },
+
+    });
 
 
-  if (!dataset) {
-    throw new Error("DATASET_NOT_FOUND");
+  if(!dataset){
+    throw new Error(
+      "DATASET_NOT_FOUND"
+    );
   }
 
 
@@ -143,120 +163,187 @@ export async function getOwnedDataset(
 }
 
 
-export async function listDatasets(companyId: string) {
-  return prisma.dataset.findMany({
-    where: {
-      companyId,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-    include: {
-      _count: {
-        select: {
-          dataRecords: true,
-          kpis: true,
-          forecasts: true,
-          recommendations: true,
-        },
-      },
-    },
-  });
+
+
+
+// =============================
+// List Datasets
+// =============================
+
+export async function listDatasets(
+  companyId:string,
+){
+
+ return prisma.dataset.findMany({
+
+   where:{
+     companyId,
+   },
+
+
+   orderBy:{
+     createdAt:"desc",
+   },
+
+
+   include:{
+     _count:{
+       select:{
+        dataRecords:true,
+        kpis:true,
+        forecasts:true,
+        recommendations:true,
+       },
+     },
+   },
+
+ });
+
 }
 
+
+
+
+
+
+// =============================
+// Get Dataset
+// =============================
 
 export async function getDataset(
-  datasetId: string,
-  companyId: string,
-) {
-  const dataset = await prisma.dataset.findFirst({
-    where: {
-      id: datasetId,
-      companyId,
-    },
-    include: {
-      _count: {
-        select: {
-          dataRecords: true,
-          kpis: true,
-          forecasts: true,
-          recommendations: true,
-        },
+ datasetId:string,
+ companyId:string,
+){
+
+ const dataset =
+ await prisma.dataset.findFirst({
+
+   where:{
+    id:datasetId,
+    companyId,
+   },
+
+
+   include:{
+    _count:{
+      select:{
+        dataRecords:true,
+        kpis:true,
+        forecasts:true,
+        recommendations:true,
       },
     },
-  });
+   },
+
+ });
 
 
-  if (!dataset) {
-    throw new Error("DATASET_NOT_FOUND");
-  }
+
+ if(!dataset){
+   throw new Error(
+    "DATASET_NOT_FOUND"
+   );
+ }
 
 
-  return dataset;
+
+ return dataset;
+
 }
 
+
+
+
+
+
+// =============================
+// Preview Dataset
+// =============================
 
 export async function previewDataset(
-  datasetId: string,
-  companyId: string,
-  limit = 20,
-) {
-  await getOwnedDataset(datasetId, companyId);
+ datasetId:string,
+ companyId:string,
+ limit=20,
+){
+
+ await getOwnedDataset(
+   datasetId,
+   companyId
+ );
 
 
-  const records = await prisma.dataRecord.findMany({
-    where: {
-      datasetId,
-    },
-    orderBy: {
-      date: "asc",
-    },
-    take: limit,
-  });
+ const records =
+ await prisma.dataRecord.findMany({
+
+   where:{
+     datasetId,
+   },
 
 
-  return records.map((record) => ({
-    ...record,
-    revenue: record.revenue.toString(),
-  }));
+   orderBy:{
+     date:"asc",
+   },
+
+
+   take:limit,
+
+ });
+
+
+
+ return records.map(record=>({
+
+   ...record,
+
+   revenue:
+    record.revenue.toString(),
+
+ }));
+
 }
 
 
+
+
+
+
+
+// =============================
+// Delete Dataset
+// =============================
+
 export async function deleteDataset(
-  datasetId: string,
-  companyId: string,
-) {
-  const dataset = await getOwnedDataset(
-    datasetId,
-    companyId,
-  );
+ datasetId:string,
+ companyId:string,
+){
+
+ const dataset =
+ await getOwnedDataset(
+   datasetId,
+   companyId
+ );
 
 
-  const csvPath = path.join(
-    CSV_UPLOAD_DIR,
-    dataset.filename,
-  );
+
+ await deleteDatasetFile(
+   dataset.id
+ );
 
 
-  try {
-    await unlink(csvPath);
-  } catch (error) {
-    const err = error as NodeJS.ErrnoException;
 
-    if (err.code !== "ENOENT") {
-      throw error;
-    }
-  }
+ await prisma.dataset.delete({
 
+   where:{
+    id:dataset.id,
+   },
 
-  await prisma.dataset.delete({
-    where: {
-      id: dataset.id,
-    },
-  });
+ });
 
 
-  return {
-    message: "Dataset deleted successfully",
-  };
+
+ return {
+   message:
+   "Dataset deleted successfully",
+ };
+
 }
