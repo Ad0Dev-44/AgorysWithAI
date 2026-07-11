@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 
 import {
   deleteDataset,
@@ -7,6 +7,7 @@ import {
   previewDataset,
   uploadDataset,
   saveMapping,
+  generateForecastForDataset,
 } from "../services/dataset.service";
 
 
@@ -237,5 +238,33 @@ export async function saveMappingHandler(
     handleDatasetError(error, res);
 
   }
+}
 
+export async function generateForecastHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  const companyId = getCompanyId(req, res);
+
+  if (!companyId) {
+    return;
+  }
+
+  const datasetId = getDatasetId(req, res);
+
+  if (!datasetId) {
+    return;
+  }
+
+  try {
+    const result = await generateForecastForDataset(
+      req.user!.userId,
+      datasetId,
+    );
+
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
 }

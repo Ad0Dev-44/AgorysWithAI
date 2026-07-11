@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma";
-
+import { generateForecast } from "../services/forecastEngine.service.js";
+import { computeRevenueTrend } from "./kpiEngine.service";
 import {
   validateCsvBuffer,
   extractHeaders,
@@ -16,6 +17,8 @@ import {
 import type {
   ColumnMapping,
 } from "./csvParser.service";
+
+const FORECAST_HORIZON_MONTHS = 6;
 
 // =============================
 // Upload Dataset
@@ -56,6 +59,41 @@ export async function uploadDataset(
 
 }
 
+export async function generateForecastForDataset(userId: string, datasetId: string) {
+  await getOwnedDataset(userId, datasetId);
+
+  const records = await getRevenueRecords(datasetId);
+
+  if (records.length === 0) {
+    throw new Error(
+      "Dataset has no records yet. Save a column mapping first.",
+    );
+  }
+
+  const { trend } = computeRevenueTrend(records);
+  const forecast = generateForecast(trend, FORECAST_HORIZON_MONTHS);
+
+  await prisma.$transaction([
+    prisma.forecast.deleteMany({ where: { datasetId } }),
+    prisma.forecast.createMany({
+      data: forecast.map((point) => ({
+        datasetId,
+        forecastDate: point.forecastDate,
+        predictedValue: point.predictedValue,
+      })),
+    }),
+    prisma.report.create({ data: { userId, reportType: "FORECAST" } }),
+  ]);
+
+  return forecast;
+}
+
+async function getRevenueRecords(datasetId: string) {
+  return prisma.dataRecord.findMany({
+    where: { datasetId },
+    orderBy: { date: "asc" },
+  });
+}
 
 export async function saveMapping(
  datasetId:string,
@@ -271,7 +309,8 @@ export async function previewDataset(
    companyId
  );
 
-
+ const PREVIEW_ROW_LIMIT = 100;
+ const FORECAST_HORIZON_MONTHS = 6;
  const records =
  await prisma.dataRecord.findMany({
 

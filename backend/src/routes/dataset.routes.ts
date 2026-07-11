@@ -7,6 +7,7 @@ import {
   previewDatasetHandler,
   uploadDatasetHandler,
   saveMappingHandler,
+  generateForecastHandler,
 } from "../controllers/dataset.controller";
 
 import { uploadCsv } from "../middlewares/upload.middleware";
@@ -42,6 +43,9 @@ router.delete(
   "/:datasetId",
   deleteDatasetHandler
 );
-
+router.post(
+  "/:datasetId/forecast/generate",
+  datasetController.generateForecast.bind(datasetController),
+);
 
 export default router;
