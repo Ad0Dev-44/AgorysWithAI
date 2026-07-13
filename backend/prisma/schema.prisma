@@ -112,6 +112,7 @@ model DataRecord {
   dataset   Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
 
   date    DateTime
+  product String
   revenue Decimal
 
   createdAt DateTime @default(now())

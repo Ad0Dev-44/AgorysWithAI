@@ -6,13 +6,16 @@ import {
   listDatasetsHandler,
   previewDatasetHandler,
   uploadDatasetHandler,
+  saveMappingHandler,
 } from "../controllers/dataset.controller";
 
 import { uploadCsv } from "../middlewares/upload.middleware";
 
 const router = Router();
 
+
 router.get("/", listDatasetsHandler);
+
 
 router.post(
   "/upload",
@@ -20,8 +23,25 @@ router.post(
   uploadDatasetHandler
 );
 
+
+router.post(
+  "/:datasetId/mapping",
+  saveMappingHandler
+);
+
+
 router.get("/:datasetId", getDatasetHandler);
-router.get("/:datasetId/preview", previewDatasetHandler);
-router.delete("/:datasetId", deleteDatasetHandler);
+
+router.get(
+  "/:datasetId/preview",
+  previewDatasetHandler
+);
+
+
+router.delete(
+  "/:datasetId",
+  deleteDatasetHandler
+);
+
 
 export default router;

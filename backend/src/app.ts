@@ -2,6 +2,7 @@ import express from "express";
 
 import authRoutes from "./modules/routes/auth.routes";
 import userRoutes from "./modules/routes/user.routes";
+import datasetRoutes from "./routes/dataset.routes";
 
 import { errorMiddleware } from "./middlewares/error.middleware.js";
 
@@ -13,6 +14,7 @@ app.use(express.json());
 // ---------------- ROUTES ----------------
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/datasets", datasetRoutes);
 
 // ---------------- HEALTH CHECK ----------------
 app.get("/", (req, res) => {
