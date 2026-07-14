@@ -1,4 +1,10 @@
 import { prisma } from "../lib/prisma";
+import { generateForecast } from "../services/forecastEngine.service";
+import {
+  computeKPIs,
+  computeRevenueTrend,
+  RevenueRecord,
+} from "./kpiEngine.service.js";
 
 import {
   validateCsvBuffer,
@@ -13,337 +19,255 @@ import {
   readDatasetFile,
 } from "./fileStorage.service";
 
-import type {
-  ColumnMapping,
-} from "./csvParser.service";
+import type { ColumnMapping } from "./csvParser.service";
+
+const FORECAST_HORIZON_MONTHS = 6;
 
 // =============================
 // Upload Dataset
 // =============================
 
 export async function uploadDataset(
- file:{
-   buffer:Buffer;
-   originalname:string;
- },
- companyId:string,
-){
+  file: {
+    buffer: Buffer;
+    originalname: string;
+  },
+  companyId: string,
+) {
+  validateCsvBuffer(file.buffer);
 
- validateCsvBuffer(file.buffer);
+  const columns = extractHeaders(file.buffer);
 
- const columns = extractHeaders(file.buffer);
+  const dataset = await prisma.dataset.create({
+    data: {
+      companyId,
+      filename: file.originalname,
+    },
+  });
 
+  await saveDatasetFile(dataset.id, file.buffer);
 
- const dataset = await prisma.dataset.create({
-   data:{
-     companyId,
-     filename:file.originalname,
-   },
- });
-
-
- await saveDatasetFile(
-   dataset.id,
-   file.buffer
- );
-
-
- return {
-   datasetId:dataset.id,
-   filename:dataset.filename,
-   columns,
- };
-
+  return {
+    datasetId: dataset.id,
+    filename: dataset.filename,
+    columns,
+  };
 }
 
+export async function generateForecastForDataset(
+  datasetId: string,
+  companyId: string,
+) {
+  await getOwnedDataset(datasetId, companyId);
+
+  const records = await getRevenueRecords(datasetId);
+
+  if (records.length === 0) {
+    throw new Error("Dataset has no records yet. Save a column mapping first.");
+  }
+
+  const { trend } = computeRevenueTrend(records);
+  const forecast = generateForecast(trend, FORECAST_HORIZON_MONTHS);
+
+  await prisma.$transaction([
+    prisma.forecast.deleteMany({
+      where: {
+        datasetId,
+      },
+    }),
+
+    prisma.forecast.createMany({
+      data: forecast.map((point) => ({
+        datasetId,
+        date: point.forecastDate,
+        value: point.predictedValue,
+      })),
+    }),
+  ]);
+
+  return forecast;
+}
+async function getRevenueRecords(datasetId: string) {
+  const records = await prisma.dataRecord.findMany({
+    where: { datasetId },
+    orderBy: { date: "asc" },
+  });
+
+  return records.map((record) => ({
+    date: record.date,
+    product: record.product,
+    revenue: Number(record.revenue),
+  }));
+}
+export async function getRevenueTrend(datasetId: string, companyId: string) {
+  await getOwnedDataset(datasetId, companyId);
+
+  const records = await getRevenueRecords(datasetId);
+  const { trend, insights } = computeRevenueTrend(records);
+
+  return { trend, insights };
+}
 
 export async function saveMapping(
- datasetId:string,
- companyId:string,
- mapping:ColumnMapping,
-){
+  datasetId: string,
+  companyId: string,
+  mapping: ColumnMapping,
+) {
+  await getOwnedDataset(datasetId, companyId);
 
- await getOwnedDataset(
-   datasetId,
-   companyId
- );
+  const buffer = await readDatasetFile(datasetId);
 
+  const headers = extractHeaders(buffer);
 
- const buffer =
- await readDatasetFile(datasetId);
+  validateMapping(headers, mapping);
 
+  const { records, errors } = parseRows(buffer, mapping);
 
+  if (records.length > 0) {
+    await prisma.dataRecord.createMany({
+      data: records.map((record) => ({
+        datasetId,
 
- const headers =
- extractHeaders(buffer);
+        date: record.date,
 
+        product: record.product,
 
+        revenue: record.revenue,
+      })),
+    });
+  }
 
- validateMapping(
-   headers,
-   mapping
- );
+  return {
+    recordsCreated: records.length,
 
-
-
- const {
-   records,
-   errors
- } =
- parseRows(
-   buffer,
-   mapping
- );
-
-
-
- if(records.length>0){
-
-   await prisma.dataRecord.createMany({
-
-    data:records.map(record=>({
-
-      datasetId,
-
-      date:record.date,
-
-      product:record.product,
-
-      revenue:record.revenue,
-
-    })),
-
-   });
-
- }
-
-
-
- return {
-
-   recordsCreated:
-      records.length,
-
-   rowErrors:
-      errors,
-
- };
-
+    rowErrors: errors,
+  };
 }
-
 
 // =============================
 // Get Owned Dataset
 // =============================
 
-export async function getOwnedDataset(
-  datasetId:string,
-  companyId:string,
-){
+export async function getOwnedDataset(datasetId: string, companyId: string) {
+  const dataset = await prisma.dataset.findFirst({
+    where: {
+      id: datasetId,
+      companyId,
+    },
+  });
 
-  const dataset =
-    await prisma.dataset.findFirst({
-
-      where:{
-        id:datasetId,
-        companyId,
-      },
-
-    });
-
-
-  if(!dataset){
-    throw new Error(
-      "DATASET_NOT_FOUND"
-    );
+  if (!dataset) {
+    throw new Error("DATASET_NOT_FOUND");
   }
-
 
   return dataset;
 }
-
-
-
-
 
 // =============================
 // List Datasets
 // =============================
 
-export async function listDatasets(
-  companyId:string,
-){
+export async function listDatasets(companyId: string) {
+  return prisma.dataset.findMany({
+    where: {
+      companyId,
+    },
 
- return prisma.dataset.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
 
-   where:{
-     companyId,
-   },
-
-
-   orderBy:{
-     createdAt:"desc",
-   },
-
-
-   include:{
-     _count:{
-       select:{
-        dataRecords:true,
-        kpis:true,
-        forecasts:true,
-        recommendations:true,
-       },
-     },
-   },
-
- });
-
+    include: {
+      _count: {
+        select: {
+          dataRecords: true,
+          kpis: true,
+          forecasts: true,
+          recommendations: true,
+        },
+      },
+    },
+  });
 }
-
-
-
-
-
 
 // =============================
 // Get Dataset
 // =============================
 
-export async function getDataset(
- datasetId:string,
- companyId:string,
-){
+export async function getDataset(datasetId: string, companyId: string) {
+  const dataset = await prisma.dataset.findFirst({
+    where: {
+      id: datasetId,
+      companyId,
+    },
 
- const dataset =
- await prisma.dataset.findFirst({
-
-   where:{
-    id:datasetId,
-    companyId,
-   },
-
-
-   include:{
-    _count:{
-      select:{
-        dataRecords:true,
-        kpis:true,
-        forecasts:true,
-        recommendations:true,
+    include: {
+      _count: {
+        select: {
+          dataRecords: true,
+          kpis: true,
+          forecasts: true,
+          recommendations: true,
+        },
       },
     },
-   },
+  });
 
- });
+  if (!dataset) {
+    throw new Error("DATASET_NOT_FOUND");
+  }
 
-
-
- if(!dataset){
-   throw new Error(
-    "DATASET_NOT_FOUND"
-   );
- }
-
-
-
- return dataset;
-
+  return dataset;
 }
-
-
-
-
-
 
 // =============================
 // Preview Dataset
 // =============================
 
 export async function previewDataset(
- datasetId:string,
- companyId:string,
- limit=20,
-){
+  datasetId: string,
+  companyId: string,
+  limit = 20,
+) {
+  await getOwnedDataset(datasetId, companyId);
 
- await getOwnedDataset(
-   datasetId,
-   companyId
- );
+  const PREVIEW_ROW_LIMIT = 100;
+  const FORECAST_HORIZON_MONTHS = 6;
+  const records = await prisma.dataRecord.findMany({
+    where: {
+      datasetId,
+    },
 
+    orderBy: {
+      date: "asc",
+    },
 
- const records =
- await prisma.dataRecord.findMany({
+    take: limit,
+  });
 
-   where:{
-     datasetId,
-   },
+  return records.map((record) => ({
+    ...record,
 
-
-   orderBy:{
-     date:"asc",
-   },
-
-
-   take:limit,
-
- });
-
-
-
- return records.map(record=>({
-
-   ...record,
-
-   revenue:
-    record.revenue.toString(),
-
- }));
-
+    revenue: record.revenue.toString(),
+  }));
 }
-
-
-
-
-
-
 
 // =============================
 // Delete Dataset
 // =============================
 
-export async function deleteDataset(
- datasetId:string,
- companyId:string,
-){
+export async function deleteDataset(datasetId: string, companyId: string) {
+  const dataset = await getOwnedDataset(datasetId, companyId);
 
- const dataset =
- await getOwnedDataset(
-   datasetId,
-   companyId
- );
+  await deleteDatasetFile(dataset.id);
 
+  await prisma.dataset.delete({
+    where: {
+      id: dataset.id,
+    },
+  });
 
-
- await deleteDatasetFile(
-   dataset.id
- );
-
-
-
- await prisma.dataset.delete({
-
-   where:{
-    id:dataset.id,
-   },
-
- });
-
-
-
- return {
-   message:
-   "Dataset deleted successfully",
- };
-
+  return {
+    message: "Dataset deleted successfully",
+  };
 }

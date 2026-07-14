@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useLogout } from "@/hooks/use-logout";
 
 import {
   registerSchema,
@@ -27,7 +26,6 @@ import {
   FieldLabel,
   FieldError,
 } from "@/components/ui/field";
-import { LogoutButton } from "@/components/logout-button";
 
 type Step = "register" | "verify";
 
@@ -47,15 +45,6 @@ export default function RegisterPage() {
   const [resendCooldown, setResendCooldown] = useState(0);
   const [isResending, setIsResending] = useState(false);
 
-  useEffect(() => {
-    if (resendCooldown === 0) return;
-
-    const timer = setInterval(() => {
-      setResendCooldown((current) => Math.max(0, current - 1));
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [resendCooldown]);
   useEffect(() => {
     if (resendCooldown === 0) return;
 
@@ -176,136 +165,76 @@ export default function RegisterPage() {
   /* ---------------- UI ---------------- */
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="space-y-3 text-center">
-          <CardTitle className="text-2xl font-bold">
-            {step === "register" ? "Create your account" : "Verify your email"}
+    <div className="flex min-h-screen items-center justify-center">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle>
+            {step === "register" ? "Create an account" : "Verify your email"}
           </CardTitle>
-
-          <p className="text-sm text-muted-foreground">
-            {step === "register"
-              ? "Join TechTalks Agorys and start sharing knowledge."
-              : "Enter the verification code sent to your email."}
-          </p>
         </CardHeader>
 
         <CardContent>
           {step === "register" ? (
             <form
               onSubmit={registerForm.handleSubmit(onRegisterSubmit)}
-              className="space-y-5"
+              className="space-y-4"
             >
-              <div className="space-y-2">
-                <FieldLabel>Email</FieldLabel>
-
+              <div>
                 <Input
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder="Email"
                   {...registerForm.register("email")}
                 />
-
                 {registerForm.formState.errors.email && (
-                  <FieldError>
+                  <p className="text-sm text-red-500">
                     {registerForm.formState.errors.email.message}
-                  </FieldError>
+                  </p>
                 )}
               </div>
 
-              <div className="space-y-2">
-                <FieldLabel>Password</FieldLabel>
-
+              <div>
                 <Input
                   type="password"
-                  placeholder="Create a password"
+                  placeholder="Password"
                   {...registerForm.register("password")}
                 />
-
                 {registerForm.formState.errors.password && (
-                  <FieldError>
+                  <p className="text-sm text-red-500">
                     {registerForm.formState.errors.password.message}
-                  </FieldError>
+                  </p>
                 )}
-
-                <p className="text-xs text-muted-foreground">
-                  Use at least 8 characters with a mix of letters and numbers.
-                </p>
               </div>
 
               {serverError && (
-                <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
-                  {serverError}
-                </div>
+                <p className="text-sm text-red-600">{serverError}</p>
               )}
 
-              <Button className="w-full" type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? "Creating account..." : "Create account"}
               </Button>
-
-              <p className="text-center text-sm text-muted-foreground">
-                Already have an account?{" "}
-                <button
-                  type="button"
-                  onClick={() => router.push("/login")}
-                  className="font-medium text-primary hover:underline"
-                >
-                  Login
-                </button>
-              </p>
             </form>
           ) : (
-            <form onSubmit={onVerifySubmit} className="space-y-5">
-              <div className="rounded-md bg-muted p-3 text-sm">
-                A verification code was sent to:
-                <br />
-                <strong>{pendingEmail}</strong>
-              </div>
+            <form onSubmit={onVerifySubmit} className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                We sent a 6-digit code to <strong>{pendingEmail}</strong>.
+              </p>
 
-              <div className="space-y-2">
-                <FieldLabel>Verification code</FieldLabel>
+              <Input
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                maxLength={6}
+                placeholder="123456"
+              />
 
-                <Input
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  maxLength={6}
-                  placeholder="123456"
-                  className="text-center text-lg tracking-[0.5em]"
-                />
-
-                {otpError && <FieldError>{otpError}</FieldError>}
-              </div>
+              {otpError && <p className="text-sm text-red-500">{otpError}</p>}
 
               {serverError && (
-                <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
-                  {serverError}
-                </div>
+                <p className="text-sm text-red-600">{serverError}</p>
               )}
 
-              <Button className="w-full" type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? "Verifying..." : "Verify email"}
               </Button>
-
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full"
-                onClick={onResendCode}
-                disabled={isResending || resendCooldown > 0}
-              >
-                {resendCooldown > 0
-                  ? `Resend code in ${resendCooldown}s`
-                  : isResending
-                    ? "Sending..."
-                    : "Resend code"}
-              </Button>
-
-              <button
-                type="button"
-                className="w-full text-sm text-muted-foreground hover:underline"
-                onClick={() => setStep("register")}
-              >
-                Change email
-              </button>
             </form>
           )}
         </CardContent>

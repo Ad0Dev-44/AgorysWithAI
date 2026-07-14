@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 
 import {
   deleteDataset,
@@ -7,13 +7,11 @@ import {
   previewDataset,
   uploadDataset,
   saveMapping,
+  generateForecastForDataset,
+  getRevenueTrend,
 } from "../services/dataset.service";
 
-
-function getCompanyId(
-  req: Request,
-  res: Response
-): string | null {
+function getCompanyId(req: Request, res: Response): string | null {
   const companyId = req.user?.companyId;
 
   if (!companyId) {
@@ -27,11 +25,7 @@ function getCompanyId(
   return companyId;
 }
 
-
-function getDatasetId(
-  req: Request,
-  res: Response
-): string | null {
+function getDatasetId(req: Request, res: Response): string | null {
   const rawDatasetId = req.params.datasetId;
 
   const datasetId = Array.isArray(rawDatasetId)
@@ -49,11 +43,7 @@ function getDatasetId(
   return datasetId;
 }
 
-
-function handleDatasetError(
-  error: unknown,
-  res: Response
-): void {
+function handleDatasetError(error: unknown, res: Response): void {
   if (error instanceof Error && error.message === "DATASET_NOT_FOUND") {
     res.status(404).json({
       message: "Dataset not found",
@@ -69,11 +59,7 @@ function handleDatasetError(
   });
 }
 
-
-export async function listDatasetsHandler(
-  req: Request,
-  res: Response
-) {
+export async function listDatasetsHandler(req: Request, res: Response) {
   const companyId = getCompanyId(req, res);
 
   if (!companyId) {
@@ -89,11 +75,7 @@ export async function listDatasetsHandler(
   }
 }
 
-
-export async function getDatasetHandler(
-  req: Request,
-  res: Response
-) {
+export async function getDatasetHandler(req: Request, res: Response) {
   const companyId = getCompanyId(req, res);
 
   if (!companyId) {
@@ -115,11 +97,7 @@ export async function getDatasetHandler(
   }
 }
 
-
-export async function previewDatasetHandler(
-  req: Request,
-  res: Response
-) {
+export async function previewDatasetHandler(req: Request, res: Response) {
   const companyId = getCompanyId(req, res);
 
   if (!companyId) {
@@ -141,11 +119,7 @@ export async function previewDatasetHandler(
   }
 }
 
-
-export async function deleteDatasetHandler(
-  req: Request,
-  res: Response
-) {
+export async function deleteDatasetHandler(req: Request, res: Response) {
   const companyId = getCompanyId(req, res);
 
   if (!companyId) {
@@ -167,10 +141,7 @@ export async function deleteDatasetHandler(
   }
 }
 
-export async function uploadDatasetHandler(
-  req: Request,
-  res: Response
-) {
+export async function uploadDatasetHandler(req: Request, res: Response) {
   const companyId = getCompanyId(req, res);
 
   if (!companyId) {
@@ -186,32 +157,26 @@ export async function uploadDatasetHandler(
   }
 
   try {
-      const dataset = await uploadDataset(
-    {
-      buffer:req.file.buffer,
-      originalname:req.file.originalname,
-    },
-    companyId
-  );
+    const dataset = await uploadDataset(
+      {
+        buffer: req.file.buffer,
+        originalname: req.file.originalname,
+      },
+      companyId,
+    );
 
     res.status(201).json(dataset);
-
   } catch (error) {
     handleDatasetError(error, res);
   }
 }
 
-export async function saveMappingHandler(
-  req: Request,
-  res: Response
-) {
-
+export async function saveMappingHandler(req: Request, res: Response) {
   const companyId = getCompanyId(req, res);
 
   if (!companyId) {
     return;
   }
-
 
   const datasetId = getDatasetId(req, res);
 
@@ -219,23 +184,61 @@ export async function saveMappingHandler(
     return;
   }
 
-
   try {
-
-    const result = await saveMapping(
-      datasetId,
-      companyId,
-      req.body
-    );
-
+    const result = await saveMapping(datasetId, companyId, req.body);
 
     res.json(result);
-
-
-  } catch(error) {
-
+  } catch (error) {
     handleDatasetError(error, res);
+  }
+}
 
+export async function generateForecastHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  const companyId = getCompanyId(req, res);
+
+  if (!companyId) {
+    return;
   }
 
+  const datasetId = getDatasetId(req, res);
+
+  if (!datasetId) {
+    return;
+  }
+
+  try {
+    const result = await generateForecastForDataset(
+      req.user!.userId,
+      datasetId,
+    );
+
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+export async function revenueTrendHandler(req: Request, res: Response) {
+  const companyId = getCompanyId(req, res);
+
+  if (!companyId) {
+    return;
+  }
+
+  const datasetId = getDatasetId(req, res);
+
+  if (!datasetId) {
+    return;
+  }
+
+  try {
+    const result = await getRevenueTrend(datasetId, companyId);
+
+    res.json(result);
+  } catch (error) {
+    handleDatasetError(error, res);
+  }
 }

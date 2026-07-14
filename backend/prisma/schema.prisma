@@ -43,6 +43,8 @@ model User {
   refreshTokens     RefreshToken[]
   emailVerification EmailVerification?
   passwordReset     PasswordReset?
+
+  reports Report[]
 }
 
 model RefreshToken {
@@ -102,6 +104,8 @@ model Dataset {
   forecasts       Forecast[]
   recommendations Recommendation[]
 
+  reports Report[]
+
   @@index([companyId])
 }
 
@@ -153,4 +157,24 @@ model Recommendation {
   text String
 
   createdAt DateTime @default(now())
+}
+
+model Report {
+  id String @id @default(uuid())
+
+  userId String
+  user User @relation(fields: [userId], references: [id])
+
+  datasetId String?
+  dataset Dataset? @relation(fields: [datasetId], references: [id])
+
+  reportType ReportType
+
+  createdAt DateTime @default(now())
+}
+
+enum ReportType {
+  FORECAST
+  KPI
+  RECOMMENDATION
 }
