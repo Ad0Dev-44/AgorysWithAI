@@ -1,5 +1,7 @@
 import { prisma } from "../lib/prisma";
 import { generateForecast } from "../services/forecastEngine.service";
+import { ApiError } from "../utils/ApiError";
+import { generateRecommendations } from "../services/recommendationEngine.service";
 import {
   computeKPIs,
   computeRevenueTrend,
@@ -86,6 +88,53 @@ export async function generateForecastForDataset(
   ]);
 
   return forecast;
+}
+
+export async function generateRecommendationsForDataset(
+  datasetId: string,
+  companyId: string,
+  userId: string,
+) {
+  await getOwnedDataset(datasetId, companyId);
+
+  const records = await getRevenueRecords(datasetId);
+
+  if (records.length === 0) {
+    throw new ApiError(
+      "NO_DATA",
+      "Dataset has no records yet. Save a column mapping first.",
+      422,
+    );
+  }
+
+  const kpis = computeKPIs(records);
+  const { trend } = computeRevenueTrend(records);
+  const forecast = generateForecast(trend, FORECAST_HORIZON_MONTHS);
+
+  const messages = generateRecommendations(records, kpis, trend, forecast);
+
+  await prisma.$transaction([
+    prisma.recommendation.deleteMany({
+      where: { datasetId },
+    }),
+
+    prisma.recommendation.createMany({
+      data: messages.map((text) => ({
+        datasetId,
+        text,
+      })),
+    }),
+
+    prisma.report.create({
+      data: {
+        userId,
+        datasetId,
+        reportType: "RECOMMENDATION",
+      },
+    }),
+  ]);
+
+  return messages;
 }
 async function getRevenueRecords(datasetId: string) {
   const records = await prisma.dataRecord.findMany({

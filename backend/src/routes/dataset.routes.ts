@@ -8,6 +8,7 @@ import {
   uploadDatasetHandler,
   saveMappingHandler,
   generateForecastHandler,
+  generateRecommendationsHandler,
   revenueTrendHandler,
 } from "../controllers/dataset.controller";
 
@@ -25,6 +26,10 @@ router.get("/:datasetId", getDatasetHandler);
 
 router.get("/:datasetId/preview", previewDatasetHandler);
 router.get("/:datasetId/trends/revenue", revenueTrendHandler);
+router.post(
+  "/:datasetId/recommendations/generate",
+  generateRecommendationsHandler,
+);
 
 router.delete("/:datasetId", deleteDatasetHandler);
 router.post("/:datasetId/forecast/generate", generateForecastHandler);

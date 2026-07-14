@@ -9,6 +9,7 @@ import {
   saveMapping,
   generateForecastForDataset,
   getRevenueTrend,
+  generateRecommendationsForDataset,
 } from "../services/dataset.service";
 
 function getCompanyId(req: Request, res: Response): string | null {
@@ -240,5 +241,34 @@ export async function revenueTrendHandler(req: Request, res: Response) {
     res.json(result);
   } catch (error) {
     handleDatasetError(error, res);
+  }
+}
+export async function generateRecommendationsHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  const companyId = getCompanyId(req, res);
+
+  if (!companyId) {
+    return;
+  }
+
+  const datasetId = getDatasetId(req, res);
+
+  if (!datasetId) {
+    return;
+  }
+
+  try {
+    const result = await generateRecommendationsForDataset(
+      datasetId,
+      companyId,
+      req.user!.userId,
+    );
+
+    res.json(result);
+  } catch (error) {
+    next(error);
   }
 }

@@ -131,5 +131,25 @@ export const countTrailingDecliningMonths = (trend: TrendPoint[]): number => {
 
   return streak;
 };
+export const getTopProductShare = (
+  records: RevenueRecord[],
+): { product: string; share: number } | null => {
+  if (records.length === 0) return null;
+
+  const totalRevenue = sumBy(records, (r) => r.revenue);
+
+  if (totalRevenue === 0) return null;
+
+  const productTotals = groupByProduct(records);
+
+  const [topProduct, topRevenue] = [...productTotals.entries()].sort(
+    (a, b) => b[1] - a[1],
+  )[0];
+
+  return {
+    product: topProduct,
+    share: round2((topRevenue / totalRevenue) * 100),
+  };
+};
 
 const round2 = (value: number): number => Math.round(value * 100) / 100;
