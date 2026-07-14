@@ -45,7 +45,6 @@ router.delete(
 );
 router.post(
   "/:datasetId/forecast/generate",
-  datasetController.generateForecast.bind(datasetController),
+  generateForecastHandler
 );
-
 export default router;

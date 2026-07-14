@@ -1,5 +1,5 @@
 import { prisma } from "../lib/prisma";
-import { generateForecast } from "../services/forecastEngine.service.js";
+import { generateForecast } from "../services/forecastEngine.service";
 import { computeRevenueTrend } from "./kpiEngine.service";
 import {
   validateCsvBuffer,
@@ -59,8 +59,11 @@ export async function uploadDataset(
 
 }
 
-export async function generateForecastForDataset(userId: string, datasetId: string) {
-  await getOwnedDataset(userId, datasetId);
+export async function generateForecastForDataset(
+  datasetId: string,
+  companyId: string,
+) {
+  await getOwnedDataset(datasetId, companyId);
 
   const records = await getRevenueRecords(datasetId);
 
@@ -70,29 +73,42 @@ export async function generateForecastForDataset(userId: string, datasetId: stri
     );
   }
 
-  const { trend } = computeRevenueTrend(records);
-  const forecast = generateForecast(trend, FORECAST_HORIZON_MONTHS);
+  
+const { trend } = computeRevenueTrend(records);
+  const forecast = generateForecast(
+    trend,
+    FORECAST_HORIZON_MONTHS,
+  );
 
   await prisma.$transaction([
-    prisma.forecast.deleteMany({ where: { datasetId } }),
+    prisma.forecast.deleteMany({
+      where: {
+        datasetId,
+      },
+    }),
+
     prisma.forecast.createMany({
       data: forecast.map((point) => ({
         datasetId,
-        forecastDate: point.forecastDate,
-        predictedValue: point.predictedValue,
+        date: point.forecastDate,
+        value: point.predictedValue,
       })),
     }),
-    prisma.report.create({ data: { userId, reportType: "FORECAST" } }),
   ]);
 
   return forecast;
 }
-
-async function getRevenueRecords(datasetId: string) {
-  return prisma.dataRecord.findMany({
+async function getRevenueRecords(datasetId:string) {
+  const records = await prisma.dataRecord.findMany({
     where: { datasetId },
-    orderBy: { date: "asc" },
+    orderBy: { date:"asc" },
   });
+
+  return records.map(record => ({
+    date: record.date,
+    product: record.product,
+    revenue: Number(record.revenue),
+  }));
 }
 
 export async function saveMapping(
