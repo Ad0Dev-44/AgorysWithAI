@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useLogout } from "@/hooks/use-logout";
 
 import {
   registerSchema,
@@ -27,7 +26,6 @@ import {
   FieldLabel,
   FieldError,
 } from "@/components/ui/field";
-import { LogoutButton } from "@/components/logout-button";
 
 type Step = "register" | "verify";
 
@@ -131,169 +129,81 @@ export default function RegisterPage() {
 
   /* ---------------- UI ---------------- */
 
-return (
-  <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
-    <Card className="w-full max-w-md shadow-lg">
-      <CardHeader className="space-y-3 text-center">
-        <CardTitle className="text-2xl font-bold">
-          {step === "register"
-            ? "Create your account"
-            : "Verify your email"}
-        </CardTitle>
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle>
+            {step === "register" ? "Create an account" : "Verify your email"}
+          </CardTitle>
+        </CardHeader>
 
-        <p className="text-sm text-muted-foreground">
-          {step === "register"
-            ? "Join TechTalks Agorys and start sharing knowledge."
-            : "Enter the verification code sent to your email."}
-        </p>
-      </CardHeader>
-
-
-      <CardContent>
-        {step === "register" ? (
-          <form
-            onSubmit={registerForm.handleSubmit(onRegisterSubmit)}
-            className="space-y-5"
-          >
-
-            <div className="space-y-2">
-              <FieldLabel>Email</FieldLabel>
-
-              <Input
-                type="email"
-                placeholder="you@example.com"
-                {...registerForm.register("email")}
-              />
-
-              {registerForm.formState.errors.email && (
-                <FieldError>
-                  {registerForm.formState.errors.email.message}
-                </FieldError>
-              )}
-            </div>
-
-
-            <div className="space-y-2">
-              <FieldLabel>Password</FieldLabel>
-
-              <Input
-                type="password"
-                placeholder="Create a password"
-                {...registerForm.register("password")}
-              />
-
-              {registerForm.formState.errors.password && (
-                <FieldError>
-                  {registerForm.formState.errors.password.message}
-                </FieldError>
-              )}
-
-              <p className="text-xs text-muted-foreground">
-                Use at least 8 characters with a mix of letters and numbers.
-              </p>
-            </div>
-
-
-            {serverError && (
-              <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
-                {serverError}
-              </div>
-            )}
-
-
-            <Button
-              className="w-full"
-              type="submit"
-              disabled={isSubmitting}
+        <CardContent>
+          {step === "register" ? (
+            <form
+              onSubmit={registerForm.handleSubmit(onRegisterSubmit)}
+              className="space-y-4"
             >
-              {isSubmitting
-                ? "Creating account..."
-                : "Create account"}
-            </Button>
+              <div>
+                <Input
+                  type="email"
+                  placeholder="Email"
+                  {...registerForm.register("email")}
+                />
+                {registerForm.formState.errors.email && (
+                  <p className="text-sm text-red-500">
+                    {registerForm.formState.errors.email.message}
+                  </p>
+                )}
+              </div>
 
+              <div>
+                <Input
+                  type="password"
+                  placeholder="Password"
+                  {...registerForm.register("password")}
+                />
+                {registerForm.formState.errors.password && (
+                  <p className="text-sm text-red-500">
+                    {registerForm.formState.errors.password.message}
+                  </p>
+                )}
+              </div>
 
-            <p className="text-center text-sm text-muted-foreground">
-              Already have an account?{" "}
-              <button
-                type="button"
-                onClick={() => router.push("/login")}
-                className="font-medium text-primary hover:underline"
-              >
-                Login
-              </button>
-            </p>
+              {serverError && (
+                <p className="text-sm text-red-600">{serverError}</p>
+              )}
 
-          </form>
-        ) : (
-
-          <form
-            onSubmit={onVerifySubmit}
-            className="space-y-5"
-          >
-
-            <div className="rounded-md bg-muted p-3 text-sm">
-              A verification code was sent to:
-              <br />
-              <strong>{pendingEmail}</strong>
-            </div>
-
-
-            <div className="space-y-2">
-              <FieldLabel>
-                Verification code
-              </FieldLabel>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Creating account..." : "Create account"}
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={onVerifySubmit} className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                We sent a 6-digit code to <strong>{pendingEmail}</strong>.
+              </p>
 
               <Input
                 value={otp}
-                onChange={(e) =>
-                  setOtp(e.target.value)
-                }
+                onChange={(e) => setOtp(e.target.value)}
                 maxLength={6}
                 placeholder="123456"
-                className="text-center text-lg tracking-[0.5em]"
               />
 
+              {otpError && <p className="text-sm text-red-500">{otpError}</p>}
 
-              {otpError && (
-                <FieldError>
-                  {otpError}
-                </FieldError>
+              {serverError && (
+                <p className="text-sm text-red-600">{serverError}</p>
               )}
 
-            </div>
-
-
-            {serverError && (
-              <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
-                {serverError}
-              </div>
-            )}
-
-
-            <Button
-              className="w-full"
-              type="submit"
-              disabled={isSubmitting}
-            >
-              {isSubmitting
-                ? "Verifying..."
-                : "Verify email"}
-            </Button>
-
-
-            <button
-              type="button"
-              className="w-full text-sm text-muted-foreground hover:underline"
-              onClick={() => setStep("register")}
-            >
-              Change email
-            </button>
-
-          </form>
-
-        )}
-      </CardContent>
-    </Card>
-  </div>
-);
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Verifying..." : "Verify email"}
+              </Button>
+            </form>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
 }

@@ -1,13 +1,12 @@
 export class ApiClientError extends Error {
-  code: string;
   status: number;
+  data?: unknown;
 
-  constructor(code: string, message: string, status: number) {
+  constructor(status: number, message: string, data?: unknown) {
     super(message);
-    this.name = "ApiClientError";
-    this.code = code;
-    this.status = status;
 
-    Object.setPrototypeOf(this, ApiClientError.prototype);
+    this.name = "ApiClientError";
+    this.status = status;
+    this.data = data;
   }
 }
