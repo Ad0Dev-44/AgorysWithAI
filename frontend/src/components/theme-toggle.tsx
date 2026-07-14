@@ -23,7 +23,7 @@ export function ThemeToggle() {
     return <Button
   size="md"
   disabled
-  className="size-9 rounded-full bg-transparent text-black hover:bg-gray-100"
+  className="size-9 rounded-full bg-transparent text-foreground hover:bg-secondary"
 />
   }
 
@@ -32,7 +32,7 @@ export function ThemeToggle() {
       <DropdownMenuTrigger asChild>
         <Button
   size="md"
-  className="size-9 rounded-full bg-transparent text-black hover:bg-gray-100"
+  className="size-9 rounded-full bg-transparent text-foreground hover:bg-secondary"
 >
           {theme === "dark" ? (
             <Moon className="size-4" />

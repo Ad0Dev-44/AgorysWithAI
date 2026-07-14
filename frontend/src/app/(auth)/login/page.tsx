@@ -72,47 +72,57 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <Card className="w-full max-w-sm">
+    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-signal-grid p-4">
+      <Card className="w-full max-w-sm shadow-lg">
         <CardHeader>
-          <CardTitle>Log in to Agorys</CardTitle>
+          <CardTitle className="font-display text-xl">Log in to Agorys</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Welcome back — pick up where you left off.
+          </p>
         </CardHeader>
 
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div>
+            <div className="space-y-1.5">
               <Input
                 type="email"
                 placeholder="Email"
                 {...form.register("email")}
               />
               {form.formState.errors.email && (
-                <p className="text-sm text-red-500">
+                <p className="text-sm text-destructive">
                   {form.formState.errors.email.message}
                 </p>
               )}
             </div>
 
-            <div>
+            <div className="space-y-1.5">
               <Input
                 type="password"
                 placeholder="Password"
                 {...form.register("password")}
               />
               {form.formState.errors.password && (
-                <p className="text-sm text-red-500">
+                <p className="text-sm text-destructive">
                   {form.formState.errors.password.message}
                 </p>
               )}
             </div>
 
             {serverError && (
-              <p className="text-sm text-red-600">{serverError}</p>
+              <p className="text-sm text-destructive">{serverError}</p>
             )}
 
             <Button type="submit" disabled={isSubmitting} className="w-full">
               {isSubmitting ? "Logging in..." : "Log in"}
             </Button>
+
+            <p className="text-center text-sm text-muted-foreground">
+              Don&apos;t have an account?{" "}
+              <a href="/register" className="font-medium text-primary hover:underline">
+                Create one
+              </a>
+            </p>
           </form>
         </CardContent>
       </Card>
