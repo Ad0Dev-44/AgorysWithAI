@@ -3,8 +3,8 @@ import "./globals.css";
 
 import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
 
-import { Navbar } from "@/pages/components/navbar";
-import { Footer } from "@/pages/components/footer";
+import { Navbar } from "@\/components\/layout\/navbar";
+import { Footer } from "@\/components\/layout\/footer";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 
