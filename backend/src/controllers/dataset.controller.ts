@@ -259,8 +259,8 @@ export async function generateForecastHandler(
 
   try {
     const result = await generateForecastForDataset(
-      req.user!.userId,
       datasetId,
+      companyId,
     );
 
     res.json(result);

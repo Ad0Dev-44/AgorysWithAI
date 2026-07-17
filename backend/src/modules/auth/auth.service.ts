@@ -16,7 +16,7 @@ function hashToken(token: string) {
 
 export class AuthService {
   // ---------------- REGISTER ----------------
-  async register(email: string, password: string) {
+  async register(email: string, password: string, companyId: string) {
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
@@ -29,12 +29,25 @@ export class AuthService {
       );
     }
 
+    const company = await prisma.company.findUnique({
+      where: { id: companyId },
+    });
+
+    if (!company) {
+      throw new ApiError(
+        "COMPANY_NOT_FOUND",
+        "The company you were invited to does not exist",
+        404
+      );
+    }
+
     const passwordHash = await hashPassword(password);
 
     await prisma.user.create({
       data: {
         email,
         passwordHash,
+        companyId,
       },
     });
 
@@ -67,7 +80,7 @@ export class AuthService {
       );
     }
 
-    return this.createSession(user.id, user.email);
+    return this.createSession(user.id, user.companyId, user.email);
   }
 
   // ---------------- REFRESH (ROTATION ENABLED) ----------------
@@ -100,8 +113,16 @@ export class AuthService {
       },
     });
 
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+    });
+
+    if (!user) {
+      throw new ApiError("INVALID_TOKEN", "Invalid refresh token", 401);
+    }
+
     return {
-      accessToken: generateAccessToken(session.userId),
+      accessToken: generateAccessToken(user.id, user.companyId),
       refreshToken: newRefreshToken,
     };
   }
@@ -143,8 +164,12 @@ export class AuthService {
   }
 
   // ---------------- CREATE SESSION ----------------
-  private async createSession(userId: string, email?: string) {
-    const accessToken = generateAccessToken(userId);
+  private async createSession(
+    userId: string,
+    companyId: string | null,
+    email?: string
+  ) {
+    const accessToken = generateAccessToken(userId, companyId);
 
     const refreshToken = randomUUID();
 
