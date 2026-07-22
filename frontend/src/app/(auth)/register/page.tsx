@@ -235,6 +235,19 @@ export default function RegisterPage() {
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? "Verifying..." : "Verify email"}
               </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={onResendCode}
+                disabled={isResending || resendCooldown > 0}
+              >
+                {resendCooldown > 0
+                  ? `Resend code in ${resendCooldown}s`
+                  : isResending
+                    ? "Sending..."
+                    : "Resend code"}
+              </Button>
             </form>
           )}
         </CardContent>
