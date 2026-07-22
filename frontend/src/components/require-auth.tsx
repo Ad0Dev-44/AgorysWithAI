@@ -23,7 +23,7 @@ export function RequireAuth({ children }: RequireAuthProps) {
   if (!hasHydrated) {
     return (
       <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
-        Loading...
+        Loading…
       </div>
     );
   }

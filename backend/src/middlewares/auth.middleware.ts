@@ -5,6 +5,7 @@ import { ApiError } from "../utils/ApiError";
 export interface AuthenticatedRequest extends Request {
   user?: {
     userId: string;
+    companyId?: string | null;
   };
 }
 
@@ -39,6 +40,7 @@ export const requireAuth = (
     // 🔥 SAFE CAST HERE (not in function signature)
     (req as AuthenticatedRequest).user = {
       userId: payload.userId,
+      companyId: payload.companyId ?? null,
     };
 
     next();

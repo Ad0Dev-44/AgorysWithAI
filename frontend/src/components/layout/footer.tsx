@@ -1,4 +1,4 @@
-import { Logo } from "@/components/landing/logo";
+import Logo from "@/components/landing/logo";
 
 const columns = [
   {
@@ -17,7 +17,7 @@ const columns = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-border/60 mt-auto">
+    <footer className="mt-auto border-t border-border bg-card">
       <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
         <div className="grid gap-10 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
           <div>
@@ -30,7 +30,7 @@ export function Footer() {
 
           {columns.map((col) => (
             <div key={col.title}>
-              <p className="text-sm font-medium text-foreground">
+              <p className="font-display text-sm font-semibold text-foreground">
                 {col.title}
               </p>
               <ul className="mt-4 space-y-3">
@@ -49,7 +49,7 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border/60 pt-6 sm:flex-row">
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border pt-6 sm:flex-row">
           <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} Agorys. All rights reserved.
           </p>

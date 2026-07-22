@@ -1,17 +1,35 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
 
+type AuthFetchOptions = Omit<RequestInit, "body"> & {
+  body?: unknown;
+};
+
 export async function authFetch<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: AuthFetchOptions = {}
 ): Promise<T> {
 
+  const { body, headers, ...rest } = options;
+  const isFormData = body instanceof FormData || body instanceof URLSearchParams;
+  const bodyToSend =
+    body instanceof FormData ||
+    body instanceof URLSearchParams ||
+    body instanceof Blob ||
+    body instanceof ArrayBuffer ||
+    typeof body === "string"
+      ? (body as BodyInit)
+      : body !== undefined
+      ? JSON.stringify(body)
+      : undefined;
+
   const response = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
+    ...rest,
     credentials: "include",
     headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
+      ...(headers || {}),
     },
+    body: bodyToSend,
   });
 
   if (!response.ok) {

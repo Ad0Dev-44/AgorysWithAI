@@ -167,21 +167,34 @@ export default function UploadPage() {
 
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-lg">
+    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-signal-grid p-4">
+      <Card className="w-full max-w-lg shadow-lg">
         <CardHeader>
-          <CardTitle>Upload a dataset</CardTitle>
+          <CardTitle className="font-display text-xl">Upload a dataset</CardTitle>
+          {step === "select-file" && (
+            <p className="text-sm text-muted-foreground">
+              CSV files only — we&apos;ll detect the columns for you.
+            </p>
+          )}
         </CardHeader>
 
         <CardContent>
         {step === "select-file" ? (
             <div className="space-y-4">
-            <input
-                type="file"
-                accept=".csv"
-                onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-                className="block w-full text-sm"
-            />
+            <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-input bg-secondary/40 px-4 py-10 text-center transition-colors hover:border-primary/50 hover:bg-secondary">
+                <span className="text-sm font-medium text-foreground">
+                  {file ? file.name : "Choose a CSV file"}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {file ? "Click to choose a different file" : "or drag and drop"}
+                </span>
+                <input
+                    type="file"
+                    accept=".csv"
+                    onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+                    className="hidden"
+                />
+            </label>
 
             <Button
                 onClick={handleUpload}
@@ -195,7 +208,7 @@ export default function UploadPage() {
             <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
                 Found {uploadResult?.columns.length ?? 0} columns in{" "}
-                <strong>{uploadResult?.filename ?? "dataset"}</strong>. Tell us which one is which:
+                <strong className="text-foreground">{uploadResult?.filename ?? "dataset"}</strong>. Tell us which one is which:
             </p>
 
             <div className="space-y-3">

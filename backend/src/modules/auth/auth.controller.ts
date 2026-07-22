@@ -6,6 +6,7 @@ export class AuthController {
     const result = await authService.register(
       req.body.email,
       req.body.password,
+      req.body.companyId,
     );
 
     res.status(201).json(result);

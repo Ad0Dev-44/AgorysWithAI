@@ -165,12 +165,17 @@ export default function RegisterPage() {
   /* ---------------- UI ---------------- */
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <Card className="w-full max-w-sm">
+    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-signal-grid p-4">
+      <Card className="w-full max-w-sm shadow-lg">
         <CardHeader>
-          <CardTitle>
+          <CardTitle className="font-display text-xl">
             {step === "register" ? "Create an account" : "Verify your email"}
           </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            {step === "register"
+              ? "Start turning data into decisions in minutes."
+              : "Almost there — one more step."}
+          </p>
         </CardHeader>
 
         <CardContent>
@@ -179,44 +184,51 @@ export default function RegisterPage() {
               onSubmit={registerForm.handleSubmit(onRegisterSubmit)}
               className="space-y-4"
             >
-              <div>
+              <div className="space-y-1.5">
                 <Input
                   type="email"
                   placeholder="Email"
                   {...registerForm.register("email")}
                 />
                 {registerForm.formState.errors.email && (
-                  <p className="text-sm text-red-500">
+                  <p className="text-sm text-destructive">
                     {registerForm.formState.errors.email.message}
                   </p>
                 )}
               </div>
 
-              <div>
+              <div className="space-y-1.5">
                 <Input
                   type="password"
                   placeholder="Password"
                   {...registerForm.register("password")}
                 />
                 {registerForm.formState.errors.password && (
-                  <p className="text-sm text-red-500">
+                  <p className="text-sm text-destructive">
                     {registerForm.formState.errors.password.message}
                   </p>
                 )}
               </div>
 
               {serverError && (
-                <p className="text-sm text-red-600">{serverError}</p>
+                <p className="text-sm text-destructive">{serverError}</p>
               )}
 
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting} className="w-full">
                 {isSubmitting ? "Creating account..." : "Create account"}
               </Button>
+
+              <p className="text-center text-sm text-muted-foreground">
+                Already have an account?{" "}
+                <a href="/login" className="font-medium text-primary hover:underline">
+                  Log in
+                </a>
+              </p>
             </form>
           ) : (
             <form onSubmit={onVerifySubmit} className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                We sent a 6-digit code to <strong>{pendingEmail}</strong>.
+                We sent a 6-digit code to <strong className="text-foreground">{pendingEmail}</strong>.
               </p>
 
               <Input
@@ -224,15 +236,16 @@ export default function RegisterPage() {
                 onChange={(e) => setOtp(e.target.value)}
                 maxLength={6}
                 placeholder="123456"
+                className="text-center font-mono text-lg tracking-[0.5em]"
               />
 
-              {otpError && <p className="text-sm text-red-500">{otpError}</p>}
+              {otpError && <p className="text-sm text-destructive">{otpError}</p>}
 
               {serverError && (
-                <p className="text-sm text-red-600">{serverError}</p>
+                <p className="text-sm text-destructive">{serverError}</p>
               )}
 
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting} className="w-full">
                 {isSubmitting ? "Verifying..." : "Verify email"}
               </Button>
               <Button

@@ -16,6 +16,6 @@ export const FieldLabel = ({ className = "", ...props }: React.LabelHTMLAttribut
 
 export const FieldError = ({ className = "", ...props }: React.HTMLAttributes<HTMLParagraphElement>) => {
   return (
-    <p className={`text-xs text-red-500 ${className}`} {...props} />
+    <p className={`text-xs text-destructive ${className}`} {...props} />
   );
 };

@@ -22,8 +22,9 @@ export function ThemeToggle() {
   if (!mounted) {
     return <Button
   size="md"
+  variant="ghost"
   disabled
-  className="size-9 rounded-full bg-transparent text-black hover:bg-gray-100"
+  className="h-9 w-9 rounded-full"
 />
   }
 
@@ -32,28 +33,29 @@ export function ThemeToggle() {
       <DropdownMenuTrigger asChild>
         <Button
   size="md"
-  className="size-9 rounded-full bg-transparent text-black hover:bg-gray-100"
+  variant="ghost"
+  className="h-9 w-9 rounded-full"
 >
           {theme === "dark" ? (
-            <Moon className="size-4" />
+            <Moon className="size-5" />
           ) : theme === "light" ? (
-            <Sun className="size-4" />
+            <Sun className="size-5" />
           ) : (
-            <Laptop className="size-4" />
+            <Laptop className="size-5" />
           )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={() => setTheme("light")}>
-          <Sun className="mr-2 size-4" />
+          <Sun className="mr-2 size-5" />
           Light
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setTheme("dark")}>
-          <Moon className="mr-2 size-4" />
+          <Moon className="mr-2 size-5" />
           Dark
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setTheme("system")}>
-          <Laptop className="mr-2 size-4" />
+          <Laptop className="mr-2 size-5" />
           System
         </DropdownMenuItem>
       </DropdownMenuContent>

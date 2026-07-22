@@ -1,7 +1,7 @@
 import jwt, { SignOptions } from "jsonwebtoken";
 
-export const generateAccessToken = (userId: string) => {
-  return jwt.sign({ userId }, process.env.JWT_ACCESS_SECRET!, {
+export const generateAccessToken = (userId: string, companyId: string | null) => {
+  return jwt.sign({ userId, companyId }, process.env.JWT_ACCESS_SECRET!, {
     expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN,
   } as SignOptions);
 };
@@ -9,6 +9,7 @@ export const generateAccessToken = (userId: string) => {
 export const verifyAccessToken = (token: string) => {
   return jwt.verify(token, process.env.JWT_ACCESS_SECRET!) as {
     userId: string;
+    companyId: string | null;
   };
 };
 

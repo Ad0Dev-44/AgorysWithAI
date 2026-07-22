@@ -9,6 +9,7 @@ import { ApiClientError } from "@/lib/api-error";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Sparkles } from "lucide-react";
 
 interface Metric {
   metricName: string;
@@ -153,22 +154,22 @@ export default function ReportsPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-6">
       <div className="flex items-center justify-between">
-        <Link href="/dashboard" className="text-sm text-muted-foreground underline">
+        <Link href="/dashboard" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
           ← Back to dashboard
         </Link>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Key Metrics</CardTitle>
+          <CardTitle className="font-display">Key Metrics</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {kpis ? (
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
               {kpis.map((metric) => (
-                <div key={metric.metricName}>
+                <div key={metric.metricName} className="rounded-lg border border-border p-3">
                   <p className="text-xs text-muted-foreground">{metric.metricName}</p>
-                  <p className="text-lg font-semibold">
+                  <p className="font-mono text-lg font-semibold tabular-figures text-foreground">
                     {metric.metricName.includes("%")
                       ? `${metric.metricValue}%`
                       : metric.metricName.includes("Transactions")
@@ -189,7 +190,7 @@ export default function ReportsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Revenue Trend</CardTitle>
+          <CardTitle className="font-display">Revenue Trend</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {isTrendLoading ? (
@@ -199,19 +200,22 @@ export default function ReportsPage() {
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={combinedChartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" fontSize={12} />
-                    <YAxis fontSize={12} tickFormatter={(value) => `$${value / 1000}k`} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="month" fontSize={12} stroke="hsl(var(--muted-foreground))" />
+                    <YAxis fontSize={12} stroke="hsl(var(--muted-foreground))" tickFormatter={(value) => `$${value / 1000}k`} />
                   <Tooltip formatter={(value) => [`$${Number(value ?? 0).toLocaleString()}`, "Revenue"]} />
-                    <Line type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={2} />
-                    <Line type="monotone" dataKey="predictedValue" stroke="hsl(var(--muted-foreground))" strokeWidth={2} />
+                    <Line type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="predictedValue" stroke="hsl(var(--insight))" strokeWidth={2} strokeDasharray="5 4" dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
               {insights.length > 0 && (
-                <ul className="space-y-1 text-sm text-muted-foreground">
+                <ul className="space-y-1.5 text-sm text-muted-foreground">
                   {insights.map((insight, index) => (
-                    <li key={index}>• {insight}</li>
+                    <li key={index} className="flex gap-2">
+                      <span className="text-primary">•</span>
+                      {insight}
+                    </li>
                   ))}
                 </ul>
               )}
@@ -226,7 +230,7 @@ export default function ReportsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Forecast</CardTitle>
+          <CardTitle className="font-display">Forecast</CardTitle>
         </CardHeader>
         <CardContent>
           <Button onClick={handleGenerateForecast} disabled={isGeneratingForecast}>
@@ -246,14 +250,15 @@ export default function ReportsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Recommendations</CardTitle>
+          <CardTitle className="font-display">Recommendations</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {recommendations ? (
             recommendations.length > 0 ? (
               <ul className="space-y-2">
                 {recommendations.map((message, index) => (
-                  <li key={index} className="rounded-md bg-muted p-3 text-sm">
+                  <li key={index} className="flex gap-3 rounded-lg bg-insight/10 p-3 text-sm text-foreground">
+                    <Sparkles className="mt-0.5 size-4 shrink-0 text-insight" />
                     {message}
                   </li>
                 ))}
@@ -278,11 +283,11 @@ export default function ReportsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Executive Summary</CardTitle>
+          <CardTitle className="font-display">Executive Summary</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {summary ? (
-            <pre className="whitespace-pre-wrap rounded-md bg-muted p-4 text-sm font-sans">
+            <pre className="whitespace-pre-wrap rounded-lg bg-muted p-4 text-sm font-sans text-foreground">
               {summary}
             </pre>
           ) : (

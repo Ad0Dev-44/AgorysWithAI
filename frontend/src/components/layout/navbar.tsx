@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import  Logo  from "@/components/landing/logo";
 
 const navLinks = [
@@ -20,7 +21,7 @@ export function Navbar() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
 
         {/* LOGO */}
@@ -44,7 +45,9 @@ export function Navbar() {
 
         {/* DESKTOP ACTIONS */}
         <div className="hidden items-center gap-2 md:flex">
-          <Link href="/register">
+          <ThemeToggle />
+
+          <Link href="/login">
             <Button
               variant="ghost"
               className="text-muted-foreground hover:text-foreground"
@@ -53,26 +56,30 @@ export function Navbar() {
             </Button>
           </Link>
 
-          <Link href="/login">
-            <Button>Login</Button>
+          <Link href="/register">
+            <Button>Get started</Button>
           </Link>
         </div>
 
         {/* MOBILE MENU BUTTON */}
-        <button
-          type="button"
-          className="inline-flex size-9 items-center justify-center rounded-md text-foreground md:hidden"
-          onClick={() => setOpen((v) => !v)}
-          aria-label={open ? "Close menu" : "Open menu"}
-          aria-expanded={open}
-        >
-          {open ? <X className="size-5" /> : <Menu className="size-5" />}
-        </button>
+        <div className="flex items-center gap-1 md:hidden">
+          <ThemeToggle />
+
+          <button
+            type="button"
+            className="inline-flex size-9 items-center justify-center rounded-md text-foreground"
+            onClick={() => setOpen((v) => !v)}
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+          >
+            {open ? <X className="size-5" /> : <Menu className="size-5" />}
+          </button>
+        </div>
       </div>
 
       {/* MOBILE MENU */}
       {open && (
-        <div className="border-t border-border/60 bg-background md:hidden">
+        <div className="border-t border-border bg-background md:hidden">
           <nav className="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-4 sm:px-6">
             {navLinks.map((link) => (
               <a
@@ -87,11 +94,11 @@ export function Navbar() {
 
             <div className="mt-2 flex flex-col gap-2">
               <Link href="/login">
-                <Button variant="outline">Sign in</Button>
+                <Button variant="outline" className="w-full">Sign in</Button>
               </Link>
 
               <Link href="/register">
-                <Button>Register</Button>
+                <Button className="w-full">Get started</Button>
               </Link>
             </div>
           </nav>
