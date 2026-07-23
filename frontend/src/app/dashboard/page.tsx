@@ -8,6 +8,8 @@ import { ApiClientError } from "@/lib/api-error";
 import { useAuthStore } from "@/store/auth-store";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardSkeleton } from "@/components/common/CardSkeleton";
+import { ErrorState } from "@/components/common/ErrorState";
 import { Badge } from "@/components/ui/badge";
 import { LogoutButton } from "@/components/logout-button";
 import { FileText, Upload, TrendingUp, Sparkles, Database } from "lucide-react";
@@ -26,21 +28,35 @@ export default function DashboardPage() {
   const email = useAuthStore((state) => state.email);
   const [datasets, setDatasets] = useState<DatasetSummary[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadDatasets = async () => {
-      try {
-        const result = await authFetch<DatasetSummary[]>("/api/datasets");
-        setDatasets(result);
-      } catch (error) {
-        toast.error(error instanceof ApiClientError ? error.message : "Failed to load datasets");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const loadDatasets = async () => {
 
-    loadDatasets();
-  }, []);
+    try {
+
+      const result = await authFetch<DatasetSummary[]>("/api/datasets");
+      setDatasets(result);
+
+    } catch (error) {
+
+      setError(
+        error instanceof ApiClientError
+          ? error.message
+          : "Failed to load datasets"
+      );
+
+    } finally {
+
+      setIsLoading(false);
+
+    }
+
+  };
+
+  loadDatasets();
+
+}, []);
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 p-6">
@@ -66,13 +82,22 @@ export default function DashboardPage() {
       </div>
 
       {isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="h-40 animate-pulse rounded-xl border border-border bg-card" />
-          ))}
-        </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {
+      Array.from({length:3}).map((_,i)=>(
+        <CardSkeleton key={i}/>
+      ))
+      }
+      </div>
+      ) : error ? (
+
+      <ErrorState
+        message={error}
+        onRetry={() => window.location.reload()}
+      />
+
       ) : datasets && datasets.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {datasets.map((dataset) => (
             <Link key={dataset.id} href={`/reports/${dataset.id}`}>
               <Card className="h-full transition-colors hover:border-primary/40">

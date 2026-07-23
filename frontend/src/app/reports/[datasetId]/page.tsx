@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import { authFetch } from "@/lib/auth-fetch";
@@ -9,7 +9,16 @@ import { ApiClientError } from "@/lib/api-error";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Trash2 } from "lucide-react";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Metric {
   metricName: string;
@@ -30,6 +39,8 @@ export default function ReportsPage() {
   const params = useParams<{ datasetId: string }>();
   const datasetId = params?.datasetId ?? "";
 
+  const router = useRouter();
+
   const [trend, setTrend] = useState<TrendPoint[] | null>(null);
   const [insights, setInsights] = useState<string[]>([]);
   const [isTrendLoading, setIsTrendLoading] = useState(true);
@@ -45,6 +56,9 @@ export default function ReportsPage() {
 
   const [summary, setSummary] = useState<string | null>(null);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadTrend = async () => {
@@ -151,12 +165,47 @@ export default function ReportsPage() {
     return [...pointsBeforeLast, mergedLastPoint, ...forecastPoints];
   })();
 
+
+  const handleConfirmDelete = async () => {
+  setDeletingId(datasetId);
+
+    try {
+      await authFetch(`/api/datasets/${datasetId}`, {
+        method: "DELETE",
+      });
+
+      toast.success("Dataset deleted");
+      router.push("/dashboard");
+    } catch (error) {
+      toast.error(
+        error instanceof ApiClientError
+          ? error.message
+          : "Failed to delete dataset",
+      );
+
+      setDeletingId(null);
+      setPendingDeleteId(null);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-6">
       <div className="flex items-center justify-between">
-        <Link href="/dashboard" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+        <Link
+          href="/dashboard"
+          className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
           ← Back to dashboard
         </Link>
+
+        <Button
+          variant="destructive"
+          className="lg:ml-auto"
+          onClick={() => setPendingDeleteId(datasetId)}
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          Delete Dataset
+        </Button>
       </div>
 
       <Card>
@@ -298,6 +347,52 @@ export default function ReportsPage() {
           </Button>
         </CardContent>
       </Card>
+
+
+      <Dialog
+      open={!!pendingDeleteId}
+      onOpenChange={(open) => {
+        if (deletingId) return;
+
+        if (!open) {
+          setPendingDeleteId(null);
+        }
+      }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            Delete this dataset?
+          </DialogTitle>
+
+          <DialogDescription>
+            This permanently deletes the dataset and every KPI,
+            forecast, and recommendation generated from it.
+            This can&apos;t be undone.
+          </DialogDescription>
+        </DialogHeader>
+
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => setPendingDeleteId(null)}
+            disabled={!!deletingId}
+          >
+            Cancel
+          </Button>
+
+          <Button
+            variant="destructive"
+            onClick={handleConfirmDelete}
+            disabled={!!deletingId}
+          >
+            {deletingId ? "Deleting..." : "Delete"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     </div>
+
+
   );
 }

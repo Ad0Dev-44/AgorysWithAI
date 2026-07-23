@@ -46,7 +46,12 @@ export const validateCsvBuffer = (buffer: Buffer): void => {
       );
     }
 
-  } catch {
+    } catch (error) {
+
+    if (error instanceof ApiError) {
+      throw error;
+    }
+
     throw new ApiError(
       "INVALID_CSV",
       "File could not be parsed as CSV",
@@ -123,7 +128,7 @@ export const parseRows = (
       rawRevenue === ""
     ) {
       errors.push({
-        rowIndex: index,
+        rowIndex: index + 2,
         reason: "Missing required field",
       });
 
@@ -135,7 +140,7 @@ export const parseRows = (
 
     if (Number.isNaN(date.getTime())) {
       errors.push({
-        rowIndex: index,
+        rowIndex: index + 2,
         reason: `Invalid date: "${rawDate}"`,
       });
 
@@ -150,8 +155,17 @@ export const parseRows = (
 
     if (Number.isNaN(revenue)) {
       errors.push({
-        rowIndex: index,
+        rowIndex: index + 2,
         reason: `Revenue not numeric: "${rawRevenue}"`,
+      });
+
+      return;
+    }
+
+    if (revenue < 0) {
+      errors.push({
+        rowIndex: index + 2,
+        reason: "Revenue cannot be negative",
       });
 
       return;
