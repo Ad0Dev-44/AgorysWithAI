@@ -11,6 +11,7 @@ import {
   getRevenueTrend,
   generateRecommendationsForDataset,
 } from "../services/dataset.service";
+import { ApiError } from "../utils/ApiError";
 
 function getCompanyId(req: Request, res: Response): string | null {
   const companyId = req.user?.companyId;
@@ -45,6 +46,16 @@ function getDatasetId(req: Request, res: Response): string | null {
 }
 
 function handleDatasetError(error: unknown, res: Response): void {
+  if (error instanceof ApiError) {
+    res.status(error.statusCode).json({
+      success: false,
+      code: error.code,
+      message: error.message,
+    });
+
+    return;
+  }
+
   if (error instanceof Error && error.message === "DATASET_NOT_FOUND") {
     res.status(404).json({
       message: "Dataset not found",
@@ -56,6 +67,7 @@ function handleDatasetError(error: unknown, res: Response): void {
   console.error(error);
 
   res.status(500).json({
+    success: false,
     message: "Internal server error",
   });
 }

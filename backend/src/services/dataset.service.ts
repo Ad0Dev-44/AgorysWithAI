@@ -148,94 +148,20 @@ async function getRevenueRecords(datasetId: string) {
     revenue: Number(record.revenue),
   }));
 }
-export async function getRevenueTrend(datasetId: string, companyId: string) {
+
+export async function getRevenueTrend(
+  datasetId: string,
+  companyId: string,
+) {
   await getOwnedDataset(datasetId, companyId);
 
+  const records = await getRevenueRecords(datasetId);
+  const { trend, insights } = computeRevenueTrend(records);
 
-export async function saveMapping(
- datasetId:string,
- companyId:string,
- mapping:ColumnMapping,
-){
-
- await getOwnedDataset(
-   datasetId,
-   companyId
- );
-
-
- const buffer =
- await readDatasetFile(datasetId);
-
-
-
- const headers =
- extractHeaders(buffer);
-
-
-
- validateMapping(
-   headers,
-   mapping
- );
-
-
-
- const {
-   records,
-   errors
- } =
- parseRows(
-   buffer,
-   mapping
- );
-
-
-
- if(records.length > 0){
-
-  await prisma.$transaction([
-
-    prisma.dataRecord.deleteMany({
-      where:{
-        datasetId,
-      },
-    }),
-
-    prisma.dataRecord.createMany({
-
-      data:records.map(record=>({
-
-        datasetId,
-
-        date:record.date,
-
-        product:record.product,
-
-        revenue:record.revenue,
-
-      })),
-
-    }),
-
-  ]);
-
-}
-
-
-
- return {
-
-   recordsCreated:
-      records.length,
-
-   rowErrors:
-      errors,
-
- };
-
-
-  return { trend, insights };
+  return {
+    trend,
+    insights,
+  };
 }
 
 export async function saveMapping(
@@ -246,7 +172,6 @@ export async function saveMapping(
   await getOwnedDataset(datasetId, companyId);
 
   const buffer = await readDatasetFile(datasetId);
-
   const headers = extractHeaders(buffer);
 
   validateMapping(headers, mapping);
@@ -257,11 +182,8 @@ export async function saveMapping(
     await prisma.dataRecord.createMany({
       data: records.map((record) => ({
         datasetId,
-
         date: record.date,
-
         product: record.product,
-
         revenue: record.revenue,
       })),
     });
@@ -269,7 +191,6 @@ export async function saveMapping(
 
   return {
     recordsCreated: records.length,
-
     rowErrors: errors,
   };
 }

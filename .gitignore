@@ -1,1 +1,18 @@
 node_modules
+
+# Build outputs
+dist/
+.next/
+coverage/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db

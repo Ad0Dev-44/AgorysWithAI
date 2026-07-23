@@ -13,24 +13,54 @@ import {
 } from "../controllers/dataset.controller";
 
 import { uploadCsv } from "../middlewares/upload.middleware";
+import { requireAuth } from "../middlewares/auth.middleware";
 
 const router = Router();
 
+// Protect all dataset routes
+router.use(requireAuth);
+
 router.get("/", listDatasetsHandler);
 
-router.post("/upload", uploadCsv.single("file"), uploadDatasetHandler);
+router.post(
+  "/upload",
+  uploadCsv.single("file"),
+  uploadDatasetHandler,
+);
 
-router.post("/:datasetId/mapping", saveMappingHandler);
+router.post(
+  "/:datasetId/mapping",
+  saveMappingHandler,
+);
 
-router.get("/:datasetId", getDatasetHandler);
+router.get(
+  "/:datasetId/preview",
+  previewDatasetHandler,
+);
 
-router.get("/:datasetId/preview", previewDatasetHandler);
-router.get("/:datasetId/trends/revenue", revenueTrendHandler);
+router.get(
+  "/:datasetId/trends/revenue",
+  revenueTrendHandler,
+);
+
 router.post(
   "/:datasetId/recommendations/generate",
   generateRecommendationsHandler,
 );
 
-router.delete("/:datasetId", deleteDatasetHandler);
-router.post("/:datasetId/forecast/generate", generateForecastHandler);
+router.post(
+  "/:datasetId/forecast/generate",
+  generateForecastHandler,
+);
+
+router.get(
+  "/:datasetId",
+  getDatasetHandler,
+);
+
+router.delete(
+  "/:datasetId",
+  deleteDatasetHandler,
+);
+
 export default router;
