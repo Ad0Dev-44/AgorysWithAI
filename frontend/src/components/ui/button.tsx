@@ -2,7 +2,7 @@ import React from "react";
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   size?: "sm" | "md" | "lg";
-  variant?: "default" | "ghost" | "outline";
+  variant?: "default" | "ghost" | "outline" | "destructive";
 };
 
 export function Button({
@@ -21,10 +21,17 @@ export function Button({
   };
 
   const variants = {
-    default: "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90",
-    ghost: "bg-transparent text-foreground hover:bg-secondary",
-    outline: "border border-border bg-transparent text-foreground hover:bg-secondary",
-  };
+  default: "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90",
+
+  ghost:
+    "bg-transparent text-foreground hover:bg-secondary",
+
+  outline:
+    "border border-border bg-transparent text-foreground hover:bg-secondary",
+
+  destructive:
+    "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
+};
 
   return (
     <button
