@@ -151,25 +151,35 @@ export async function saveMapping(
 
 
 
- if(records.length>0){
+ if(records.length > 0){
 
-   await prisma.dataRecord.createMany({
+  await prisma.$transaction([
 
-    data:records.map(record=>({
+    prisma.dataRecord.deleteMany({
+      where:{
+        datasetId,
+      },
+    }),
 
-      datasetId,
+    prisma.dataRecord.createMany({
 
-      date:record.date,
+      data:records.map(record=>({
 
-      product:record.product,
+        datasetId,
 
-      revenue:record.revenue,
+        date:record.date,
 
-    })),
+        product:record.product,
 
-   });
+        revenue:record.revenue,
 
- }
+      })),
+
+    }),
+
+  ]);
+
+}
 
 
 
