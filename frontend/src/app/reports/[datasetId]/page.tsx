@@ -35,7 +35,12 @@ interface ForecastPoint {
   forecastDate: string;
   predictedValue: number;
 }
-
+interface PreviewRecord {
+  id: string;
+  date: string;
+  product: string;
+  revenue: number;
+}
 export default function ReportsPage() {
   const params = useParams<{ datasetId: string }>();
   const datasetId = params?.datasetId ?? "";
@@ -60,6 +65,9 @@ export default function ReportsPage() {
 
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [preview, setPreview] = useState<PreviewRecord[] | null>(null);
+const [showPreview, setShowPreview] = useState(false);
+const [isPreviewLoading, setIsPreviewLoading] = useState(false);
 
   useEffect(() => {
     const loadTrend = async () => {
@@ -145,7 +153,36 @@ export default function ReportsPage() {
       setIsGeneratingSummary(false);
     }
   };
+const handleTogglePreview = async () => {
+  if (showPreview) {
+    setShowPreview(false);
+    return;
+  }
 
+  setShowPreview(true);
+
+  if (preview) {
+    return;
+  }
+
+  setIsPreviewLoading(true);
+
+  try {
+    const result = await authFetch<PreviewRecord[]>(
+      /api/datasets/${datasetId}/preview,
+    );
+
+    setPreview(result);
+  } catch (error) {
+    toast.error(
+      error instanceof ApiClientError
+        ? error.message
+        : "Failed to load preview",
+    );
+  } finally {
+    setIsPreviewLoading(false);
+  }
+};
   const combinedChartData = (() => {
     if (!trend) return [];
     const actualPoints = trend.map((point) => ({
@@ -341,7 +378,46 @@ export default function ReportsPage() {
           </Button>
         </CardContent>
       </Card>
+<Card>
+  <CardHeader>
+    <CardTitle className="font-display">
+      Raw Dataset Preview
+    </CardTitle>
+  </CardHeader>
 
+  <CardContent className="space-y-4">
+
+    <Button onClick={handleTogglePreview}>
+      {showPreview ? "Hide raw data" : "View raw data"}
+    </Button>
+
+    {showPreview && (
+      <>
+        {isPreviewLoading ? (
+          <p className="text-sm text-muted-foreground">
+            Loading preview...
+          </p>
+        ) : preview ? (
+          <div className="space-y-2">
+            {preview.map((record) => (
+              <div
+                key={record.id}
+                className="rounded-lg border p-3 text-sm"
+              >
+                <p>Date: {new Date(record.date).toLocaleDateString("en-LB")}</p>
+                <p>Product: {record.product}</p>
+                <p>
+                  Revenue: {record.revenue.toLocaleString("en-LB")}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </>
+    )}
+
+  </CardContent>
+</Card>
       <Card>
         <CardHeader>
           <CardTitle className="font-display">Executive Summary</CardTitle>
