@@ -9,6 +9,7 @@ import { ApiClientError } from "@/lib/api-error";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { CardSkeleton } from "@/components/common/CardSkeleton";
 import { Sparkles, Trash2 } from "lucide-react";
 
 import {
@@ -189,7 +190,7 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 p-6">
+    <main className="mx-auto max-w-4xl space-y-6 p-6">
       <div className="flex items-center justify-between">
         <Link
           href="/dashboard"
@@ -203,7 +204,7 @@ export default function ReportsPage() {
           className="lg:ml-auto"
           onClick={() => setPendingDeleteId(datasetId)}
         >
-          <Trash2 className="mr-2 h-4 w-4" />
+          <Trash2 className="mr-2 h-4 w-4" aria-hidden="true"/>
           Delete Dataset
         </Button>
       </div>
@@ -243,8 +244,11 @@ export default function ReportsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {isTrendLoading ? (
-            <p className="text-sm text-muted-foreground">Loading trend...</p>
-          ) : trend && trend.length > 0 ? (
+          <div className="space-y-4">
+            <div className="h-64 animate-pulse rounded-lg bg-muted" />
+            <CardSkeleton />
+          </div>
+        ) : trend && trend.length > 0 ? (
             <>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
@@ -289,11 +293,17 @@ export default function ReportsPage() {
                 ? "Regenerate forecast"
                 : "Generate 6-month forecast"}
           </Button>
-          {forecast && (
-            <p className="mt-2 text-sm text-muted-foreground">
-              Forecast added to the chart above — dashed line shows projected revenue.
-            </p>
-          )}
+          {isGeneratingForecast && (
+          <div className="mt-4">
+            <div className="h-32 animate-pulse rounded-lg bg-muted" />
+          </div>
+        )}
+
+        {forecast && (
+          <p className="mt-2 text-sm text-muted-foreground">
+            Forecast added to the chart above — dashed line shows projected revenue.
+          </p>
+        )}
         </CardContent>
       </Card>
 
@@ -302,12 +312,14 @@ export default function ReportsPage() {
           <CardTitle className="font-display">Recommendations</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {recommendations ? (
+          {isGeneratingRecommendations ? (
+          <CardSkeleton />
+        ) : recommendations ? (
             recommendations.length > 0 ? (
               <ul className="space-y-2">
                 {recommendations.map((message, index) => (
                   <li key={index} className="flex gap-3 rounded-lg bg-insight/10 p-3 text-sm text-foreground">
-                    <Sparkles className="mt-0.5 size-4 shrink-0 text-insight" />
+                    <Sparkles className="mt-0.5 size-4 shrink-0 text-insight" aria-hidden="true"/>
                     {message}
                   </li>
                 ))}
@@ -335,7 +347,9 @@ export default function ReportsPage() {
           <CardTitle className="font-display">Executive Summary</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {summary ? (
+          {isGeneratingSummary ? (
+          <CardSkeleton />
+        ) : summary ? (
             <pre className="whitespace-pre-wrap rounded-lg bg-muted p-4 text-sm font-sans text-foreground">
               {summary}
             </pre>
@@ -391,7 +405,7 @@ export default function ReportsPage() {
         </DialogFooter>
       </DialogContent>
     </Dialog>
-    </div>
+    </main>
 
 
   );
