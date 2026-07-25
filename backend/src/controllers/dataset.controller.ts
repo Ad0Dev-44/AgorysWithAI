@@ -82,7 +82,17 @@ export async function listDatasetsHandler(req: Request, res: Response) {
   try {
     const datasets = await listDatasets(companyId);
 
-    res.json(datasets);
+    const formatted = datasets.map((dataset) => ({
+      id: dataset.id,
+      filename: dataset.filename,
+      uploadDate: dataset.createdAt,
+      recordCount: dataset._count.dataRecords,
+      kpiCount: dataset._count.kpis,
+      forecastCount: dataset._count.forecasts,
+      recommendationCount: dataset._count.recommendations,
+    }));
+
+    res.json(formatted);
   } catch (error) {
     handleDatasetError(error, res);
   }

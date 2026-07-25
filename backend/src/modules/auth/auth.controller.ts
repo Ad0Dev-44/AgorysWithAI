@@ -7,10 +7,18 @@ export class AuthController {
       req.body.email,
       req.body.password,
       req.body.companyId,
+      req.body.companyName
     );
 
+    
     res.status(201).json(result);
   }
+
+  async verifyEmail(req: Request, res: Response) {
+  const result = await authService.verifyEmail(req.body.email, req.body.otp);
+  res.status(200).json(result);
+}
+
 
   async login(req: Request, res: Response) {
     const result = await authService.login(

@@ -93,7 +93,7 @@ export async function generateForecastForDataset(
 export async function generateRecommendationsForDataset(
   datasetId: string,
   companyId: string,
-  userId: string,
+  userId: number,
 ) {
   await getOwnedDataset(datasetId, companyId);
 
@@ -119,23 +119,16 @@ export async function generateRecommendationsForDataset(
     }),
 
     prisma.recommendation.createMany({
-      data: messages.map((text) => ({
-        datasetId,
-        text,
-      })),
-    }),
-
-    prisma.report.create({
-      data: {
-        userId,
-        datasetId,
-        reportType: "RECOMMENDATION",
-      },
-    }),
-  ]);
-
+    data: messages.map((message) => ({
+      datasetId,
+      title: "Recommendation",
+      message,
+    })),
+  }),
+]);
   return messages;
 }
+
 async function getRevenueRecords(datasetId: string) {
   const records = await prisma.dataRecord.findMany({
     where: { datasetId },

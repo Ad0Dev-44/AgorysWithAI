@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 
 import authRoutes from "./modules/routes/auth.routes";
 import userRoutes from "./modules/routes/user.routes";
@@ -9,6 +10,12 @@ import { errorMiddleware } from "./middlewares/error.middleware.js";
 const app = express();
 
 // ---------------- CORE MIDDLEWARE ----------------
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  }),
+);
 app.use(express.json());
 
 // ---------------- ROUTES ----------------

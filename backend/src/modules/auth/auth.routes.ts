@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import { authController } from "./auth.controller.js";
 
+import { verifyEmailSchema } from "../../validationSchemas/verifyEmail";
 import { registerSchema } from "../../validationSchemas/register.js";
 import { loginSchema } from "../../validationSchemas/login.js";
 import { refreshSchema } from "../../validationSchemas/refresh.js";
@@ -19,6 +20,10 @@ router.post(
   authController.register.bind(authController),
 );
 
+router.post(
+  "/verify-email",
+  validate(verifyEmailSchema), 
+  authController.verifyEmail.bind(authController));
 // ---------------- LOGIN ----------------
 router.post(
   "/login",

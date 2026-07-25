@@ -9,6 +9,7 @@ import { loginSchema } from "../../validationSchemas/login";
 import { refreshSchema } from "../../validationSchemas/refresh";
 import { forgotPasswordSchema } from "../../validationSchemas/forgotPassword";
 import { resetPasswordSchema } from "../../validationSchemas/resetPassword";
+import { verifyEmailSchema } from "../../validationSchemas/verifyEmail";
 
 const router = Router();
 
@@ -17,6 +18,13 @@ router.post(
   "/register",
   validate(registerSchema),
   authController.register.bind(authController)
+);
+
+// ---------------- VERIFY EMAIL ----------------
+router.post(
+  "/verify-email",
+  validate(verifyEmailSchema),
+  authController.verifyEmail.bind(authController)
 );
 
 // ---------------- LOGIN ----------------

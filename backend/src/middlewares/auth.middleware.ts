@@ -4,7 +4,7 @@ import { ApiError } from "../utils/ApiError";
 
 export interface AuthenticatedRequest extends Request {
   user?: {
-    userId: string;
+    userId: number;
     companyId?: string | null;
   };
 }

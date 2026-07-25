@@ -1,3 +1,5 @@
+import { useAuthStore } from "@/store/auth-store";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
 
 type AuthFetchOptions = Omit<RequestInit, "body"> & {
@@ -22,11 +24,14 @@ export async function authFetch<T>(
       ? JSON.stringify(body)
       : undefined;
 
+  const accessToken = useAuthStore.getState().accessToken;
+
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...rest,
     credentials: "include",
     headers: {
       ...(isFormData ? {} : { "Content-Type": "application/json" }),
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       ...(headers || {}),
     },
     body: bodyToSend,

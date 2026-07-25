@@ -2,9 +2,13 @@ import { prisma } from "../../lib/prisma";
 import { hashPassword, comparePassword } from "../../utils/pwdHelper";
 import { generateAccessToken } from "../../utils/jwtHelper";
 import { ApiError } from "../../utils/ApiError";
+import { generateOTP, hashOTP } from "../../utils/otpHelper";
+import { sendEmail } from "../../utils/emailHelper";
 import { randomUUID, createHash } from "crypto";
 
 const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const OTP_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const MAX_OTP_ATTEMPTS = 5;
 
 /**
  * Hash refresh tokens before storing in DB
@@ -16,7 +20,7 @@ function hashToken(token: string) {
 
 export class AuthService {
   // ---------------- REGISTER ----------------
-  async register(email: string, password: string, companyId: string) {
+  async register(email: string, password: string, companyId?: string, companyName?: string) {
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
@@ -29,59 +33,147 @@ export class AuthService {
       );
     }
 
-    const company = await prisma.company.findUnique({
-      where: { id: companyId },
-    });
+    let resolvedCompanyId: string;
 
-    if (!company) {
-      throw new ApiError(
-        "COMPANY_NOT_FOUND",
-        "The company you were invited to does not exist",
-        404
-      );
+    if (companyId) {
+      // Invite flow: joining an existing company.
+      const company = await prisma.company.findUnique({
+        where: { id: companyId },
+      });
+
+      if (!company) {
+        throw new ApiError(
+          "COMPANY_NOT_FOUND",
+          "The company you were invited to does not exist",
+          404
+        );
+      }
+
+      resolvedCompanyId = company.id;
+    } else {
+      // Self-serve flow: no companyId given, so create a new Company for this user.
+      const newCompany = await prisma.company.create({
+        data: {
+          name: companyName?.trim() || `${email.split("@")[0]}'s Company`,
+        },
+      });
+
+      resolvedCompanyId = newCompany.id;
     }
 
     const passwordHash = await hashPassword(password);
 
-    await prisma.user.create({
+    const user = await prisma.user.create({
       data: {
         email,
         passwordHash,
-        companyId,
+        companyId: resolvedCompanyId,
       },
     });
+
+    const otp = generateOTP();
+
+    await prisma.emailVerification.create({
+      data: {
+        userId: user.id,
+        otpHash: hashOTP(otp),
+        expiresAt: new Date(Date.now() + OTP_TTL_MS),
+        lastSentAt: new Date(),
+      },
+    });
+
+    await sendEmail(
+      email,
+      "Verify your email",
+      `Your verification code is ${otp}. It expires in 10 minutes.`,
+    );
 
     return {
       message: "User registered successfully",
     };
   }
 
-  // ---------------- LOGIN ----------------
-  async login(email: string, password: string) {
-    const user = await prisma.user.findUnique({
-      where: { email },
+  // ---------------- VERIFY EMAIL ----------------
+  async verifyEmail(email: string, otp: string) {
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      throw new ApiError("INVALID_OTP", "Invalid or expired code", 400);
+    }
+
+    const verification = await prisma.emailVerification.findUnique({
+      where: { userId: user.id },
     });
 
-    if (!user || !user.passwordHash) {
+    if (!verification) {
+      throw new ApiError("INVALID_OTP", "Invalid or expired code", 400);
+    }
+
+    if (verification.lockedUntil && verification.lockedUntil > new Date()) {
       throw new ApiError(
-        "INVALID_CREDENTIALS",
-        "Invalid email or password",
-        401
+        "TOO_MANY_ATTEMPTS",
+        "Too many incorrect attempts. Please request a new code.",
+        429,
       );
     }
 
-    const isValid = await comparePassword(password, user.passwordHash);
-
-    if (!isValid) {
-      throw new ApiError(
-        "INVALID_CREDENTIALS",
-        "Invalid email or password",
-        401
-      );
+    if (verification.expiresAt < new Date()) {
+      throw new ApiError("OTP_EXPIRED", "This code has expired. Please request a new one.", 400);
     }
+
+    if (hashOTP(otp) !== verification.otpHash) {
+      const attempts = verification.attempts + 1;
+      const lockedUntil =
+        attempts >= MAX_OTP_ATTEMPTS ? new Date(Date.now() + 15 * 60 * 1000) : null;
+
+      await prisma.emailVerification.update({
+        where: { userId: user.id },
+        data: { attempts, lockedUntil },
+      });
+
+      throw new ApiError("INVALID_OTP", "Invalid or expired code", 400);
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { isVerified: true },
+    });
+
+    await prisma.emailVerification.delete({ where: { userId: user.id } });
 
     return this.createSession(user.id, user.companyId, user.email);
   }
+
+  // ---------------- LOGIN ----------------
+async login(email: string, password: string) {
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  if (!user || !user.passwordHash) {
+    throw new ApiError("INVALID_CREDENTIALS", "Invalid email or password", 401);
+  }
+
+  const isValid = await comparePassword(password, user.passwordHash);
+
+  if (!isValid) {
+    throw new ApiError("INVALID_CREDENTIALS", "Invalid email or password", 401);
+  }
+
+  if (!user.isVerified) {
+    return {
+      verified: false,
+      message: "Please verify your email before logging in.",
+    };
+  }
+
+  const session = await this.createSession(user.id, user.companyId, user.email);
+
+  return {
+    verified: true,
+    ...session,
+  };
+}
 
   // ---------------- REFRESH (ROTATION ENABLED) ----------------
   async refresh(refreshToken: string) {
@@ -165,7 +257,7 @@ export class AuthService {
 
   // ---------------- CREATE SESSION ----------------
   private async createSession(
-    userId: string,
+    userId: number,
     companyId: string | null,
     email?: string
   ) {
