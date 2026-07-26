@@ -10,8 +10,8 @@ import {
   generateForecastHandler,
   generateRecommendationsHandler,
   revenueTrendHandler,
+  exportReportHandler,
 } from "../controllers/dataset.controller";
-
 import { uploadCsv } from "../middlewares/upload.middleware";
 import { requireAuth } from "../middlewares/auth.middleware";
 
@@ -61,6 +61,11 @@ router.get(
 router.delete(
   "/:datasetId",
   deleteDatasetHandler,
+);
+
+router.get(
+  "/:datasetId/report/export",
+  exportReportHandler,
 );
 
 export default router;

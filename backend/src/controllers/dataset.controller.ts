@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 
+
 import {
   deleteDataset,
   getDataset,
@@ -10,7 +11,9 @@ import {
   generateForecastForDataset,
   getRevenueTrend,
   generateRecommendationsForDataset,
+  getReportDataForExport,
 } from "../services/dataset.service";
+import { exportReportAsPdf, exportReportAsExcel } from "../services/reportExport.service";
 import { ApiError } from "../utils/ApiError";
 
 function getCompanyId(req: Request, res: Response): string | null {
@@ -292,5 +295,43 @@ export async function generateRecommendationsHandler(
     res.json(result);
   } catch (error) {
     next(error);
+  }
+}
+
+export async function exportReportHandler(req: Request, res: Response) {
+  const companyId = getCompanyId(req, res);
+
+  if (!companyId) {
+    return;
+  }
+
+  const datasetId = getDatasetId(req, res);
+
+  if (!datasetId) {
+    return;
+  }
+
+  const format = req.query.format === "xlsx" ? "xlsx" : "pdf";
+
+  try {
+    const { summary, kpis } = await getReportDataForExport(datasetId, companyId);
+
+    if (format === "pdf") {
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", "attachment; filename=agorys-report.pdf");
+      const doc = exportReportAsPdf(summary, kpis);
+      doc.pipe(res);
+      return;
+    }
+
+    const buffer = await exportReportAsExcel(summary, kpis);
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+    res.setHeader("Content-Disposition", "attachment; filename=agorys-report.xlsx");
+    res.send(buffer);
+  } catch (error) {
+    handleDatasetError(error, res);
   }
 }
