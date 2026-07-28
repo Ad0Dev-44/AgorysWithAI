@@ -315,3 +315,48 @@ export async function deleteDataset(datasetId: string, companyId: string) {
     message: "Dataset deleted successfully",
   };
 }
+
+function buildExecutiveSummary(
+  kpis: ReturnType<typeof computeKPIs>,
+  trend: ReturnType<typeof computeRevenueTrend>["trend"],
+  recommendations: string[],
+): string {
+  const lines: string[] = [];
+
+  lines.push(`This report covers ${trend.length} month(s) of activity.`);
+
+  kpis.forEach((kpi) => {
+    lines.push(`${kpi.metricName}: ${kpi.metricValue}`);
+  });
+
+  if (recommendations.length > 0) {
+    lines.push("");
+    lines.push("Recommendations:");
+    recommendations.forEach((rec) => lines.push(`- ${rec}`));
+  }
+
+  return lines.join("\n");
+}
+
+export async function getReportDataForExport(datasetId: string, companyId: string) {
+  await getOwnedDataset(datasetId, companyId);
+
+  const records = await getRevenueRecords(datasetId);
+
+  if (records.length === 0) {
+    throw new ApiError(
+      "NO_DATA",
+      "Dataset has no records yet. Save a column mapping first.",
+      422,
+    );
+  }
+
+  const kpis = computeKPIs(records);
+  const { trend } = computeRevenueTrend(records);
+  const forecast = generateForecast(trend, FORECAST_HORIZON_MONTHS);
+  const recommendations = generateRecommendations(records, kpis, trend, forecast);
+
+  const summary = buildExecutiveSummary(kpis, trend, recommendations);
+
+  return { summary, kpis };
+}

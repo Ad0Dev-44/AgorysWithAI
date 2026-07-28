@@ -12,6 +12,15 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { CardSkeleton } from "@/components/common/CardSkeleton";
 import { Sparkles, Trash2 } from "lucide-react";
 
+import { useAuthStore } from "@/store/auth-store";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 import {
   Dialog,
   DialogContent,
@@ -57,6 +66,9 @@ export default function ReportsPage() {
 
   const [summary, setSummary] = useState<string | null>(null);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+
+  const [reportFormat, setReportFormat] = useState<"pdf" | "xlsx">("pdf");
+  const [isDownloadingReport, setIsDownloadingReport] = useState(false);
 
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -188,6 +200,42 @@ export default function ReportsPage() {
       setPendingDeleteId(null);
     }
   };
+
+  const handleDownloadReport = async () => {
+  setIsDownloadingReport(true);
+  try {
+    const accessToken = useAuthStore.getState().accessToken;
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
+
+    const response = await fetch(
+      `${apiUrl}/api/datasets/${datasetId}/report/export?format=${reportFormat}`,
+      {
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      },
+    );
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({ message: "Download failed" }));
+      throw new Error(body.message || "Download failed");
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `agorys-report.${reportFormat === "xlsx" ? "xlsx" : "pdf"}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+
+    toast.success("Report downloaded");
+  } catch (error) {
+    toast.error(error instanceof Error ? error.message : "Failed to download report");
+  } finally {
+    setIsDownloadingReport(false);
+  }
+};
 
   return (
     <main className="mx-auto max-w-4xl space-y-6 p-6">
@@ -359,6 +407,34 @@ export default function ReportsPage() {
           <Button onClick={handleGenerateSummary} disabled={isGeneratingSummary}>
             {isGeneratingSummary ? "Generating..." : summary ? "Regenerate summary" : "Generate executive summary"}
           </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-display">Download Report</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Export the executive summary and KPIs as a PDF or Excel file.
+          </p>
+          <div className="flex items-center gap-3">
+            <Select
+              value={reportFormat}
+              onValueChange={(value) => setReportFormat(value as "pdf" | "xlsx")}
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pdf">PDF</SelectItem>
+                <SelectItem value="xlsx">Excel</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button onClick={handleDownloadReport} disabled={isDownloadingReport}>
+              {isDownloadingReport ? "Preparing..." : "Download Report"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

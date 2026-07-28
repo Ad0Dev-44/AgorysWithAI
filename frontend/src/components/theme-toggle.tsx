@@ -20,35 +20,35 @@ export function ThemeToggle() {
   }, []);
 
   if (!mounted) {
-  return (
-    <Button
-      size="md"
-      variant="ghost"
-      disabled
-      className="h-9 w-9 rounded-full"
-      aria-label="Change theme"
-    />
-  );
-}
+    return (
+      <Button
+        size="md"
+        variant="ghost"
+        disabled
+        className="h-9 w-9 p-0 rounded-full"
+        aria-label="Change theme"
+      />
+    );
+  }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-  <Button
-    size="md"
-    variant="ghost"
-    className="h-9 w-9 rounded-full"
-    aria-label="Change theme"
-  >
-    {theme === "dark" ? (
-      <Moon className="size-5" aria-hidden="true" />
-    ) : theme === "light" ? (
-      <Sun className="size-5" aria-hidden="true" />
-    ) : (
-      <Laptop className="size-5" aria-hidden="true" />
-    )}
-  </Button>
-</DropdownMenuTrigger>
+        <Button
+          size="md"
+          variant="ghost"
+          className="h-9 w-9 p-0 rounded-full"
+          aria-label="Change theme"
+        >
+          {theme === "dark" ? (
+            <Moon className="size-6" aria-hidden="true" />
+          ) : theme === "light" ? (
+            <Sun className="size-6" aria-hidden="true" />
+          ) : (
+            <Laptop className="size-6" aria-hidden="true" />
+          )}
+        </Button>
+      </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={() => setTheme("light")}>
           <Sun className="mr-2 size-5" />
