@@ -1,4 +1,10 @@
 import React from "react";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   size?: "sm" | "md" | "lg";
@@ -21,21 +27,15 @@ export function Button({
   };
 
   const variants = {
-  default: "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90",
-
-  ghost:
-    "bg-transparent text-foreground hover:bg-secondary",
-
-  outline:
-    "border border-border bg-transparent text-foreground hover:bg-secondary",
-
-  destructive:
-    "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
-};
+    default: "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90",
+    ghost: "bg-transparent text-foreground hover:bg-secondary",
+    outline: "border border-border bg-transparent text-foreground hover:bg-secondary",
+    destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
+  };
 
   return (
     <button
-      className={`${base} ${sizes[size]} ${variants[variant]} ${className}`}
+      className={cn(base, sizes[size], variants[variant], className)}
       {...props}
     />
   );
