@@ -144,6 +144,64 @@ export class AuthService {
     return this.createSession(user.id, user.companyId, user.email);
   }
 
+  // ---------------- RESEND VERIFICATION ----------------
+  async resendVerification(email: string) {
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    // Don't reveal whether the email exists — same response either way.
+    const genericResponse = {
+      message: "If the email exists and is unverified, a new code has been sent.",
+    };
+
+    if (!user || user.isVerified) {
+      return genericResponse;
+    }
+
+    const existing = await prisma.emailVerification.findUnique({
+      where: { userId: user.id },
+    });
+
+    const RESEND_COOLDOWN_MS = 60 * 1000; // 60s, matches frontend cooldown timer
+
+    if (
+      existing?.lastSentAt &&
+      Date.now() - existing.lastSentAt.getTime() < RESEND_COOLDOWN_MS
+    ) {
+      throw new ApiError(
+        "RESEND_COOLDOWN",
+        "Please wait before requesting another code.",
+        429,
+      );
+    }
+
+    const otp = generateOTP();
+
+    await prisma.emailVerification.upsert({
+      where: { userId: user.id },
+      update: {
+        otpHash: hashOTP(otp),
+        expiresAt: new Date(Date.now() + OTP_TTL_MS),
+        lastSentAt: new Date(),
+        attempts: 0,
+        lockedUntil: null,
+      },
+      create: {
+        userId: user.id,
+        otpHash: hashOTP(otp),
+        expiresAt: new Date(Date.now() + OTP_TTL_MS),
+        lastSentAt: new Date(),
+      },
+    });
+
+    await sendEmail(
+      email,
+      "Verify your email",
+      `Your verification code is ${otp}. It expires in 10 minutes.`,
+    );
+
+    return genericResponse;
+  }
+
   // ---------------- LOGIN ----------------
 async login(email: string, password: string) {
   const user = await prisma.user.findUnique({

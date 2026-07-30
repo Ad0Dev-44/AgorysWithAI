@@ -20,6 +20,11 @@ export class AuthController {
 }
 
 
+  async resendVerification(req: Request, res: Response) {
+    const result = await authService.resendVerification(req.body.email);
+    res.status(200).json(result);
+  }
+
   async login(req: Request, res: Response) {
     const result = await authService.login(
       req.body.email,
