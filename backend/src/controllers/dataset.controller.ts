@@ -9,8 +9,10 @@ import {
   uploadDataset,
   saveMapping,
   generateForecastForDataset,
+  generateKpisForDataset,
   getRevenueTrend,
   generateRecommendationsForDataset,
+  generateReportSummaryForDataset,
   getReportDataForExport,
 } from "../services/dataset.service";
 import { exportReportAsPdf, exportReportAsExcel } from "../services/reportExport.service";
@@ -219,6 +221,32 @@ export async function saveMappingHandler(req: Request, res: Response) {
   }
 }
 
+export async function generateKpisHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  const companyId = getCompanyId(req, res);
+
+  if (!companyId) {
+    return;
+  }
+
+  const datasetId = getDatasetId(req, res);
+
+  if (!datasetId) {
+    return;
+  }
+
+  try {
+    const result = await generateKpisForDataset(datasetId, companyId);
+
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function generateForecastHandler(
   req: Request,
   res: Response,
@@ -291,6 +319,32 @@ export async function generateRecommendationsHandler(
       companyId,
       req.user!.userId,
     );
+
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function generateReportHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  const companyId = getCompanyId(req, res);
+
+  if (!companyId) {
+    return;
+  }
+
+  const datasetId = getDatasetId(req, res);
+
+  if (!datasetId) {
+    return;
+  }
+
+  try {
+    const result = await generateReportSummaryForDataset(datasetId, companyId);
 
     res.json(result);
   } catch (error) {

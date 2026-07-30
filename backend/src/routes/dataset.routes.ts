@@ -8,7 +8,9 @@ import {
   uploadDatasetHandler,
   saveMappingHandler,
   generateForecastHandler,
+  generateKpisHandler,
   generateRecommendationsHandler,
+  generateReportHandler,
   revenueTrendHandler,
   exportReportHandler,
 } from "../controllers/dataset.controller";
@@ -44,6 +46,11 @@ router.get(
 );
 
 router.post(
+  "/:datasetId/kpis/generate",
+  generateKpisHandler,
+);
+
+router.post(
   "/:datasetId/recommendations/generate",
   generateRecommendationsHandler,
 );
@@ -61,6 +68,11 @@ router.get(
 router.delete(
   "/:datasetId",
   deleteDatasetHandler,
+);
+
+router.post(
+  "/:datasetId/report/generate",
+  generateReportHandler,
 );
 
 router.get(
