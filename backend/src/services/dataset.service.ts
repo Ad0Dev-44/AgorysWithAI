@@ -8,6 +8,7 @@ import {
   RevenueRecord,
 } from "./kpiEngine.service.js";
 
+
 import {
   validateCsvBuffer,
   extractHeaders,
@@ -22,6 +23,7 @@ import {
 } from "./fileStorage.service";
 
 import type { ColumnMapping } from "./csvParser.service";
+import { generateTrendInsights } from "./trendInsights.service";
 
 const FORECAST_HORIZON_MONTHS = 6;
 
@@ -184,14 +186,24 @@ export async function getRevenueTrend(
   await getOwnedDataset(datasetId, companyId);
 
   const records = await getRevenueRecords(datasetId);
-  const { trend, insights } = computeRevenueTrend(records);
+
+  if (records.length === 0) {
+    throw new ApiError(
+      "NO_DATA",
+      "Dataset has no records yet. Save a column mapping first.",
+      422,
+    );
+  }
+
+  const { trend } = computeRevenueTrend(records);
+
+  const insights = generateTrendInsights(trend);
 
   return {
     trend,
     insights,
   };
 }
-
 export async function saveMapping(
   datasetId: string,
   companyId: string,
@@ -349,6 +361,7 @@ export async function deleteDataset(datasetId: string, companyId: string) {
   return {
     message: "Dataset deleted successfully",
   };
+  
 }
 
 function buildExecutiveSummary(
