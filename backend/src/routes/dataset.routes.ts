@@ -41,7 +41,7 @@ router.get(
 );
 
 router.get(
-  "/:datasetId/trend",
+  "/:datasetId/trends/revenue",
   revenueTrendHandler,
 );
 
