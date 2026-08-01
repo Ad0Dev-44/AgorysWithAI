@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { authFetch } from "@/lib/auth-fetch";
 import { ApiClientError } from "@/lib/api-error";
+import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -80,6 +81,7 @@ export default function UploadPage() {
   const [step, setStep] = useState<Step>("select-file");
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const [uploadResult, setUploadResult] =
     useState<UploadResult | null>(null);
@@ -128,6 +130,34 @@ export default function UploadPage() {
         setIsUploading(false);
     }
     };
+
+  const handleDragOver = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+
+    const droppedFile = event.dataTransfer.files?.[0];
+
+    if (!droppedFile) {
+      return;
+    }
+
+    if (!droppedFile.name.endsWith(".csv")) {
+      toast.error("Only CSV files are allowed");
+      return;
+    }
+
+    setFile(droppedFile);
+  };
 
   const handleSaveMapping = async () => {
     if (!uploadResult) return;
@@ -181,7 +211,15 @@ export default function UploadPage() {
         <CardContent>
         {step === "select-file" ? (
             <div className="space-y-4">
-            <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-input bg-secondary/40 px-4 py-10 text-center transition-colors hover:border-primary/50 hover:bg-secondary">
+            <label
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={cn(
+                  "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-input bg-secondary/40 px-4 py-10 text-center transition-colors hover:border-primary/50 hover:bg-secondary",
+                  isDragging && "border-primary bg-secondary",
+                )}
+            >
                 <span className="text-sm font-medium text-foreground">
                   {file ? file.name : "Choose a CSV file"}
                 </span>
@@ -267,3 +305,4 @@ export default function UploadPage() {
     </div>
   );
 }
+
