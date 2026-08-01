@@ -181,8 +181,8 @@ const handleTogglePreview = async () => {
 
   try {
     const result = await authFetch<PreviewRecord[]>(
-      /api/datasets/${datasetId}/preview,
-    );
+  `/api/datasets/${datasetId}/preview`,
+  );
 
     setPreview(result);
   } catch (error) {
