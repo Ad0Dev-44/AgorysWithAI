@@ -71,6 +71,15 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Link href="/ai">
+            <Button
+              variant="outline"
+              className="border-insight/40 bg-insight/10 text-insight hover:bg-insight/20 hover:text-insight"
+            >
+              <Sparkles className="size-4" aria-hidden="true"/>
+              AGORYS AI
+            </Button>
+          </Link>
           <Link href="/upload">
             <Button>
               <Upload className="size-4" aria-hidden="true"/>
