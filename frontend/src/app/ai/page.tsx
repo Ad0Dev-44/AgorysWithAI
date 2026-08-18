@@ -113,12 +113,12 @@ export default function AIPage() {
           {selectedDatasetId && (
             <div className="grid gap-6 lg:grid-cols-2">
               <div className="lg:col-span-2">
-                <AIChat datasetId={selectedDatasetId} />
+                <AIChat key={`chat-${selectedDatasetId}`} datasetId={selectedDatasetId} />
               </div>
-              <AIInsightCard datasetId={selectedDatasetId} />
-              <AIRecommendation datasetId={selectedDatasetId} />
+              <AIInsightCard key={`insight-${selectedDatasetId}`} datasetId={selectedDatasetId} />
+              <AIRecommendation key={`recommend-${selectedDatasetId}`} datasetId={selectedDatasetId} />
               <div className="lg:col-span-2">
-                <AIReport datasetId={selectedDatasetId} />
+                <AIReport key={`report-${selectedDatasetId}`} datasetId={selectedDatasetId} />
               </div>
             </div>
           )}
