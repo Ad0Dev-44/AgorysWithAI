@@ -21,6 +21,7 @@ import { AIChat } from "@/components/ai/AIChat";
 import { AIInsightCard } from "@/components/ai/AIInsightCard";
 import { AIRecommendation } from "@/components/ai/AIRecommendation";
 import { AIReport } from "@/components/ai/AIReport";
+import type { AIMessageData } from "@/components/ai/AIMessage";
 
 interface DatasetSummary {
   id: string;
@@ -36,6 +37,9 @@ export default function AIPage() {
   const [datasets, setDatasets] = useState<DatasetSummary[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDatasetId, setSelectedDatasetId] = useState<string | null>(null);
+  // Chat history kept per dataset, in the parent, so switching back to a
+  // previously-visited dataset restores its conversation instead of losing it.
+  const [chatHistories, setChatHistories] = useState<Record<string, AIMessageData[]>>({});
 
   useEffect(() => {
     const loadDatasets = async () => {
@@ -113,7 +117,13 @@ export default function AIPage() {
           {selectedDatasetId && (
             <div className="grid gap-6 lg:grid-cols-2">
               <div className="lg:col-span-2">
-                <AIChat key={`chat-${selectedDatasetId}`} datasetId={selectedDatasetId} />
+                <AIChat
+                  datasetId={selectedDatasetId}
+                  messages={chatHistories[selectedDatasetId] ?? []}
+                  onMessagesChange={(messages) =>
+                    setChatHistories((prev) => ({ ...prev, [selectedDatasetId]: messages }))
+                  }
+                />
               </div>
               <AIInsightCard key={`insight-${selectedDatasetId}`} datasetId={selectedDatasetId} />
               <AIRecommendation key={`recommend-${selectedDatasetId}`} datasetId={selectedDatasetId} />

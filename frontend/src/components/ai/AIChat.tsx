@@ -20,10 +20,14 @@ interface AIChatProps {
   // Optional — if provided, the backend attaches this dataset's KPIs/trend
   // as context so the assistant can answer questions grounded in real data.
   datasetId?: string;
+  // Controlled from the parent so conversation history survives switching
+  // datasets and back, instead of living in this component's own state
+  // (which would otherwise be wiped every time the parent remounts it).
+  messages: AIMessageData[];
+  onMessagesChange: (messages: AIMessageData[]) => void;
 }
 
-export function AIChat({ datasetId }: AIChatProps) {
-  const [messages, setMessages] = useState<AIMessageData[]>([]);
+export function AIChat({ datasetId, messages, onMessagesChange }: AIChatProps) {
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -40,7 +44,7 @@ export function AIChat({ datasetId }: AIChatProps) {
 
     const userMessage: AIMessageData = { role: "user", content: trimmed };
     const nextMessages = [...messages, userMessage];
-    setMessages(nextMessages);
+    onMessagesChange(nextMessages);
     setInput("");
     setIsSending(true);
     scrollToBottom();
@@ -55,11 +59,9 @@ export function AIChat({ datasetId }: AIChatProps) {
         },
       });
 
-      setMessages((prev) => [...prev, { role: "assistant", content: result.content }]);
+      onMessagesChange([...nextMessages, { role: "assistant", content: result.content }]);
     } catch (error) {
       toast.error(error instanceof ApiClientError ? error.message : "Failed to get a response");
-      // Roll back the optimistic user message context isn't needed — keep it visible,
-      // just surface the error so the user knows the assistant didn't reply.
     } finally {
       setIsSending(false);
       scrollToBottom();
