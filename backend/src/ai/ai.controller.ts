@@ -11,18 +11,15 @@ import {
   requestReport,
   requestRecommendations,
   requestChat,
+  requestEmbedding,
 } from "./ai.service";
-
-// Every AI feature is scoped to a specific dataset — datasetId comes from
-// the route param, companyId from the auth token.
+import { insertEmbedding } from "./embeddingStore.service";
 
 function getAuthContext(
   req: AuthenticatedRequest,
   res: Response
 ): { companyId: string; datasetId: string } | null {
   const companyId = req.user?.companyId;
-
-  // req.params values can come back as string | string[] | undefined
   const rawDatasetId = req.params.datasetId;
   const datasetId = Array.isArray(rawDatasetId) ? rawDatasetId[0] : rawDatasetId;
 
@@ -36,6 +33,27 @@ function getAuthContext(
   }
 
   return { companyId, datasetId };
+}
+
+function captureInsightEmbedding(params: {
+  companyId: string;
+  datasetId: string;
+  sourceType: "DASHBOARD_EXPLAIN" | "REPORT" | "RECOMMENDATION";
+  content: string;
+}) {
+  requestEmbedding(params.content)
+    .then((embedding) =>
+      insertEmbedding({
+        companyId: params.companyId,
+        datasetId: params.datasetId,
+        sourceType: params.sourceType,
+        content: params.content,
+        embedding,
+      })
+    )
+    .catch((err) => {
+      console.error("[ai.controller] Failed to capture insight embedding:", err.message || err);
+    });
 }
 
 export async function explainDashboard(req: AuthenticatedRequest, res: Response) {
@@ -59,6 +77,13 @@ export async function explainDashboard(req: AuthenticatedRequest, res: Response)
     });
 
     res.json(result);
+
+    captureInsightEmbedding({
+      companyId,
+      datasetId,
+      sourceType: "DASHBOARD_EXPLAIN",
+      content: result.content,
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message || "Failed to generate dashboard explanation" });
   }
@@ -90,6 +115,13 @@ export async function generateReport(req: AuthenticatedRequest, res: Response) {
     });
 
     res.json(result);
+
+    captureInsightEmbedding({
+      companyId,
+      datasetId,
+      sourceType: "REPORT",
+      content: result.content,
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message || "Failed to generate report" });
   }
@@ -116,14 +148,19 @@ export async function getRecommendations(req: AuthenticatedRequest, res: Respons
     });
 
     res.json(result);
+
+    captureInsightEmbedding({
+      companyId,
+      datasetId,
+      sourceType: "RECOMMENDATION",
+      content: result.content,
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message || "Failed to generate recommendations" });
   }
 }
 
-// Chat is not dataset-scoped in the route — a user might ask a general
-// question. If a datasetId is included in the body, KPI/trend context is
-// attached for a grounded answer.
+// Chat is intentionally NOT captured into AIInsightEmbedding, It is the CONSUMER of retrieved context, not a producer of it.
 export async function chat(req: AuthenticatedRequest, res: Response) {
   const companyId = req.user?.companyId;
   if (!companyId) {

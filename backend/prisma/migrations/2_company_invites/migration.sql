@@ -1,4 +1,4 @@
--- Adds Company table and links User -> Company (invite-into-existing-company model).
+-- Adds Company table and links User -> Company 
 -- Additive only: existing users keep companyId = NULL until assigned.
 
 CREATE TABLE "Company" (

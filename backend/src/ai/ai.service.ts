@@ -2,11 +2,6 @@ import axios, { AxiosError } from "axios";
 
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || "http://localhost:5001";
 
-// This file's only job: forward already-computed analytics data to ai-service
-// and return whatever comes back. It does NOT build prompts and does NOT
-// touch the database directly — that's handled by ai.controller.ts, which
-// gathers data via the existing dataset.service.ts functions.
-
 function unwrapAiServiceError(err: unknown): Error {
   if (axios.isAxiosError(err)) {
     const axiosErr = err as AxiosError<{ error?: string }>;
@@ -23,9 +18,7 @@ function unwrapAiServiceError(err: unknown): Error {
 
 export async function requestDashboardExplanation(payload: unknown) {
   try {
-    const { data } = await axios.post(`${AI_SERVICE_URL}/dashboard/explain`, payload, {
-      timeout: 30_000,
-    });
+    const { data } = await axios.post(`${AI_SERVICE_URL}/dashboard/explain`, payload, { timeout: 30_000 });
     return data;
   } catch (err) {
     throw unwrapAiServiceError(err);
@@ -34,9 +27,7 @@ export async function requestDashboardExplanation(payload: unknown) {
 
 export async function requestReport(payload: unknown) {
   try {
-    const { data } = await axios.post(`${AI_SERVICE_URL}/report`, payload, {
-      timeout: 30_000,
-    });
+    const { data } = await axios.post(`${AI_SERVICE_URL}/report`, payload, { timeout: 30_000 });
     return data;
   } catch (err) {
     throw unwrapAiServiceError(err);
@@ -45,9 +36,7 @@ export async function requestReport(payload: unknown) {
 
 export async function requestRecommendations(payload: unknown) {
   try {
-    const { data } = await axios.post(`${AI_SERVICE_URL}/recommendations`, payload, {
-      timeout: 30_000,
-    });
+    const { data } = await axios.post(`${AI_SERVICE_URL}/recommendations`, payload, { timeout: 30_000 });
     return data;
   } catch (err) {
     throw unwrapAiServiceError(err);
@@ -56,10 +45,17 @@ export async function requestRecommendations(payload: unknown) {
 
 export async function requestChat(payload: unknown) {
   try {
-    const { data } = await axios.post(`${AI_SERVICE_URL}/chat`, payload, {
-      timeout: 30_000,
-    });
+    const { data } = await axios.post(`${AI_SERVICE_URL}/chat`, payload, { timeout: 30_000 });
     return data;
+  } catch (err) {
+    throw unwrapAiServiceError(err);
+  }
+}
+
+export async function requestEmbedding(text: string): Promise<number[]> {
+  try {
+    const { data } = await axios.post(`${AI_SERVICE_URL}/embed`, { text }, { timeout: 30_000 });
+    return data.embedding;
   } catch (err) {
     throw unwrapAiServiceError(err);
   }
