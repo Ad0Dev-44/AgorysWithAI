@@ -104,9 +104,10 @@ export function AIChat({ datasetId, messages, onMessagesChange }: AIChatProps) {
             placeholder="Why did revenue decrease this month?"
             disabled={isSending}
           />
-          <Button onClick={handleSend} disabled={isSending || !input.trim()} size="icon">
-            <Send className="h-4 w-4" />
-          </Button>
+        <Button onClick={handleSend} disabled={isSending || !input.trim()}
+        className="size-11 shrink-0 rounded-full p-0">
+          <Send className="size-5" aria-hidden="true" />
+        </Button>
         </div>
       </CardContent>
     </Card>

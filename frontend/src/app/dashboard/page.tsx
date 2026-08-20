@@ -74,12 +74,15 @@ export default function DashboardPage() {
           <Link href="/ai">
             <Button
               variant="outline"
-              className="border-insight/40 bg-insight/10 text-insight hover:bg-insight/20 hover:text-insight"
-            >
-              <Sparkles className="size-4" aria-hidden="true"/>
-              AGORYS AI
-            </Button>
-          </Link>
+              className="group border-violet-500/30 bg-gradient-to-r from-violet-500/15 via-violet-500/10
+               to-violet-500/15 pl-2.5 pr-4 text-violet-600 shadow-sm transition-all hover:border-violet-500/50 hover:shadow-md hover:shadow-violet-500/20 dark:border-violet-400/30 dark:text-violet-300 dark:from-violet-400/15
+               dark:via-violet-400/10 dark:to-violet-400/15 dark:hover:border-violet-400/50 dark:hover:shadow-violet-400/20">
+      <span className="flex size-5 items-center justify-center rounded-full bg-violet-500/20 transition-colors group-hover:bg-violet-500/30 dark:bg-violet-400/20 dark:group-hover:bg-violet-400/30">
+        <Sparkles className="size-3" aria-hidden="true" />
+        </span>
+        AGORYS AI
+          </Button>
+        </Link>
           <Link href="/upload">
             <Button>
               <Upload className="size-4" aria-hidden="true"/>

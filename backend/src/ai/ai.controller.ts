@@ -14,6 +14,7 @@ import {
   requestEmbedding,
 } from "./ai.service";
 import { insertEmbedding } from "./embeddingStore.service";
+import { retrieveRelevantInsights } from "./retrieval.service";
 
 function getAuthContext(
   req: AuthenticatedRequest,
@@ -160,7 +161,10 @@ export async function getRecommendations(req: AuthenticatedRequest, res: Respons
   }
 }
 
-// Chat is intentionally NOT captured into AIInsightEmbedding, It is the CONSUMER of retrieved context, not a producer of it.
+// Chat is intentionally NOT captured into AIInsightEmbedding — it's
+// conversational, not a durable "insight" the way an explanation, report,
+// or recommendation set is. It's also the CONSUMER of retrieved context
+// starting Day 8, not a producer of it.
 export async function chat(req: AuthenticatedRequest, res: Response) {
   const companyId = req.user?.companyId;
   if (!companyId) {
@@ -181,7 +185,24 @@ export async function chat(req: AuthenticatedRequest, res: Response) {
       trend = trendData.trend;
     }
 
-    const result = await requestChat({ companyId, message, history, kpis, trend });
+    // Retrieve relevant past insights across ALL of this company's datasets,
+    // giving the assistant continuity beyond just the current dataset.
+   
+    let retrievedContext: string[] = [];
+    try {
+      retrievedContext = await retrieveRelevantInsights(companyId, message, 4);
+    } catch (err: any) {
+      console.error("[ai.controller] Retrieval failed, continuing without it:", err.message || err);
+    }
+
+    const result = await requestChat({
+      companyId,
+      message,
+      history,
+      kpis,
+      trend,
+      retrievedContext,
+    });
     res.json(result);
   } catch (err: any) {
     res.status(500).json({ error: err.message || "Chat failed" });
